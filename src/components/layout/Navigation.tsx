@@ -232,7 +232,6 @@ const Navigation = () => {
 
               <Link href="/blog" className="py-2" onClick={() => setMobileMenuOpen(false)}>Blog</Link>
               <Link href="/my-account" className="py-2" onClick={() => setMobileMenuOpen(false)}>My Account</Link>
-              <Link href="/admin" className="py-2" onClick={() => setMobileMenuOpen(false)}>Admin</Link>
             </div>
           </SheetContent>
         </Sheet>
