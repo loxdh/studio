@@ -14,17 +14,8 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import type { Product } from '@/lib/products';
 import { collection } from 'firebase/firestore';
 import { Button } from '../ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../ui/dialog';
-import AddProductForm from './AddProductForm';
-import { useState } from 'react';
-import { ScrollArea } from '../ui/scroll-area';
+import Link from 'next/link';
+import { PlusCircle } from 'lucide-react';
 
 export default function ProductManager() {
   const firestore = useFirestore();
@@ -33,8 +24,6 @@ export default function ProductManager() {
     [firestore]
   );
   const { data: products, isLoading } = useCollection<Product>(productsCollection);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
 
   if (isLoading) {
     return <div>Loading products...</div>;
@@ -43,25 +32,13 @@ export default function ProductManager() {
   return (
     <>
     <div className="flex justify-end mb-4">
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>Add Product</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] md:max-w-screen-md max-h-[90vh] flex flex-col">
-            <DialogHeader>
-              <DialogTitle>Add a New Product</DialogTitle>
-              <DialogDescription>
-                Fill out the details below to add a new product to your catalog.
-              </DialogDescription>
-            </DialogHeader>
-            <ScrollArea className="flex-grow pr-1">
-                <div className="pr-5">
-                    <AddProductForm onProductAdded={() => setIsDialogOpen(false)} />
-                </div>
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
-      </div>
+        <Button asChild>
+            <Link href="/admin/products/add">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Add Product
+            </Link>
+        </Button>
+    </div>
     <Table>
       <TableHeader>
         <TableRow>
