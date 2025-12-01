@@ -11,7 +11,7 @@ export default function Home() {
     <div className="flex flex-col">
       <section className="relative h-[60vh] w-full flex items-center justify-center text-foreground bg-background">
         <Aurora
-          colorStops={["#E0E0E0", "#C0C0C0", "#A0A0A0"]}
+          colorStops={['#FFD700', '#DAA520', '#B8860B']}
           blend={0.5}
           amplitude={1.0}
           speed={0.5}
