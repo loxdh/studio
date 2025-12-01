@@ -17,6 +17,7 @@ import { Button } from '../ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -46,12 +47,17 @@ export default function ProductManager() {
           <DialogTrigger asChild>
             <Button>Add Product</Button>
           </DialogTrigger>
-          <DialogContent className="max-h-[90vh]">
+          <DialogContent className="sm:max-w-[425px] md:max-w-screen-md max-h-[90vh] flex flex-col">
             <DialogHeader>
               <DialogTitle>Add a New Product</DialogTitle>
+              <DialogDescription>
+                Fill out the details below to add a new product to your catalog.
+              </DialogDescription>
             </DialogHeader>
-            <ScrollArea className="pr-6">
-                <AddProductForm onProductAdded={() => setIsDialogOpen(false)} />
+            <ScrollArea className="flex-grow pr-1">
+                <div className="pr-5">
+                    <AddProductForm onProductAdded={() => setIsDialogOpen(false)} />
+                </div>
             </ScrollArea>
           </DialogContent>
         </Dialog>
