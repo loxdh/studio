@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Product": {
@@ -26,14 +27,25 @@
           "type": "number",
           "description": "The price of the product."
         },
-        "imageUrl": {
+        "image": {
           "type": "string",
-          "description": "URL of the product's image.",
-          "format": "uri"
+          "description": "ID of the product's placeholder image."
         },
         "categoryId": {
           "type": "string",
           "description": "Reference to Category. (Relationship: Category 1:N Product)"
+        },
+        "metaTitle": {
+          "type": "string",
+          "description": "SEO title for the product page."
+        },
+        "metaDescription": {
+          "type": "string",
+          "description": "SEO meta description for the product page."
+        },
+        "metaKeywords": {
+          "type": "string",
+          "description": "Comma-separated SEO keywords for the product page."
         },
         "createdAt": {
           "type": "string",
@@ -52,7 +64,7 @@
         "slug",
         "description",
         "price",
-        "imageUrl",
+        "image",
         "categoryId",
         "createdAt",
         "updatedAt"
@@ -197,3 +209,5 @@
     "reasoning": "This Firestore data structure is designed to support the United Love Luxe e-commerce platform, focusing on products, categories, and blog articles, with a specific emphasis on enabling a functional admin dashboard. It prioritizes simplicity, security, and scalability using key principles:\n\n1. **Authorization Independence:**  Admin access is granted via the `/roles_admin/{uid}` collection. The existence of a document with the user's UID in this collection grants admin privileges.  This eliminates the need for complex `get()` calls in security rules and allows for atomic operations.\n\n2.  **Clarity of Intent:** The structure is explicit, with clear separation of data based on type and access requirements. The admin role is explicitly defined in a separate collection.\n\n3. **DBAC (Database Auth):** Roles are stored directly in the database, avoiding custom claims.  Security rules rely solely on `request.auth.uid` and the presence of a document in the `/roles_admin/{uid}` collection.\n\n4. **QAPs (Rules are Not Filters):** Secure list operations are supported via structural segregation.  Only admins can create/modify products because of the security rule that relies on the `/roles_admin/{uid}` collection.\n\n5.  **Invariants:** The structure supports data integrity by providing clear ownership and timestamp fields within the Product and BlogArticle entities.  The slug field in Product is not strictly enforced structurally but should be enforced at the application level.\n\n**Collection Structure Justification:**\n\n*   `/products`: Stores product information. Only admins can create, update, or delete products. This is enforced by checking for admin privileges via the `/roles_admin/{uid}` collection in the security rules. Includes the `categoryId` which references a document in the `categories` collection.\n*   `/categories`: Stores category information.  Only admins can create, update, or delete categories.  Similar to products, access is controlled via the `/roles_admin/{uid}` collection.\n*   `/blog_articles`: Stores blog article content.  Only admins can create, update, or delete blog articles. Admin privileges are enforced using the same mechanism as products and categories.\n*   `/roles_admin`: This collection stores documents representing admin users. The document ID is the user's UID. The existence of a document in this collection grants the user admin privileges."
   }
 }
+
+    

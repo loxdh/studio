@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -21,13 +22,18 @@ import {
 } from '@/firebase';
 import { collection, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import ImageSelector from './ImageSelector';
+import { Separator } from '../ui/separator';
 
 const formSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   price: z.coerce.number().positive('Price must be a positive number.'),
   category: z.string().min(2, 'Category is required.'),
-  image: z.string().min(1, 'Image ID is required (e.g., prod-1)'),
+  image: z.string().min(1, 'Please select an image.'),
+  metaTitle: z.string().optional(),
+  metaDescription: z.string().optional(),
+  metaKeywords: z.string().optional(),
 });
 
 type AddProductFormProps = {
@@ -50,6 +56,9 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
       price: 0,
       category: '',
       image: '',
+      metaTitle: '',
+      metaDescription: '',
+      metaKeywords: '',
     },
   });
 
@@ -131,9 +140,57 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
           name="image"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Image ID</FormLabel>
+              <FormLabel>Product Image</FormLabel>
               <FormControl>
-                <Input placeholder="From placeholder-images.json (e.g., prod-1)" {...field} />
+                <ImageSelector 
+                    selectedImageId={field.value}
+                    onImageSelect={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Separator className="my-6" />
+        
+        <h3 className="text-lg font-medium">SEO Details</h3>
+        <p className="text-sm text-muted-foreground -mt-2 mb-4">Optional, but recommended for better search ranking.</p>
+
+        <FormField
+          control={form.control}
+          name="metaTitle"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Meta Title</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., Elegant Wedding Invitations | United Love Luxe" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+         <FormField
+          control={form.control}
+          name="metaDescription"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Meta Description</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Brief summary for search engine results." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="metaKeywords"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Meta Keywords</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., wedding invitations, luxury stationery, custom invites" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -144,3 +201,5 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
     </Form>
   );
 }
+
+    

@@ -1,37 +1,49 @@
-// This page will require significant changes to fetch data from Firestore.
-// For now, we leave it as is to avoid breaking it, but it will only show static data.
-// In a future step, we will make this page dynamic with Firestore.
 
-import { products } from '@/lib/products';
+'use client';
 import { notFound } from 'next/navigation';
 import ProductDetailClient from '@/components/products/ProductDetailClient';
-import type { Metadata } from 'next';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import type { Product } from '@/lib/products';
+import { collection, query, where, limit } from 'firebase/firestore';
 
-type Props = {
-  params: { slug: string };
-};
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  // This part remains static for now
-  const product = products.find((p) => p.slug === params.slug);
-
-  if (!product) {
-    return {
-      title: 'Product Not Found',
-    };
-  }
-
-  return {
-    title: `${product.name} | United Love Luxe`,
-    description: product.description,
-  };
-}
+// This function can't be used with a client component that fetches data.
+// We will manage metadata within the client component or move to a server component structure later.
+// export async function generateMetadata({ params }: Props): Promise<Metadata> {
+// }
 
 
 export default function ProductPage({ params }: { params: { slug: string } }) {
   const { slug } = params;
-  // This part remains static for now
-  const product = products.find((p) => p.slug === slug);
+  const firestore = useFirestore();
+
+  const productsQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'products'), where('slug', '==', slug), limit(1));
+  }, [firestore, slug]);
+
+  const { data: products, isLoading } = useCollection<Product>(productsQuery);
+  const product = products?.[0];
+
+  // Update metadata dynamically
+  if (product?.metaTitle) {
+     if (typeof document !== 'undefined') {
+      document.title = product.metaTitle;
+    }
+  }
+   if (product?.metaDescription) {
+    let metaDescElement = document.querySelector('meta[name="description"]');
+    if (!metaDescElement) {
+      metaDescElement = document.createElement('meta');
+      metaDescElement.setAttribute('name', 'description');
+      document.head.appendChild(metaDescElement);
+    }
+    metaDescElement.setAttribute('content', product.metaDescription);
+  }
+
+
+  if (isLoading) {
+    return <div>Loading product...</div>;
+  }
 
   if (!product) {
     notFound();
@@ -40,10 +52,4 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
   return <ProductDetailClient product={product} />;
 }
 
-// This needs to be dynamic based on Firestore data in the future
-export async function generateStaticParams() {
-    // This part remains static for now
-  return products.map((product) => ({
-    slug: product.slug,
-  }));
-}
+    
