@@ -1,28 +1,22 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import ProductGrid from '@/components/products/ProductGrid';
 import { products } from '@/lib/products';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import Aurora from '@/components/ui/aurora';
 
 export default function Home() {
-  const heroImage = PlaceHolderImages.find((img) => img.id === 'hero');
   const featuredProducts = products.slice(0, 4);
 
   return (
     <div className="flex flex-col">
-      <section className="relative h-[60vh] w-full text-white">
-        {heroImage && (
-          <Image
-            src={heroImage.imageUrl}
-            alt={heroImage.description}
-            fill
-            className="object-cover"
-            data-ai-hint={heroImage.imageHint}
-            priority
-          />
-        )}
-        <div className="absolute inset-0 bg-black/50" />
+      <section className="relative h-[60vh] w-full text-white bg-black">
+        <Aurora
+          colorStops={["#3A29FF", "#FF94B4", "#FF3232"]}
+          blend={0.5}
+          amplitude={1.0}
+          speed={0.5}
+        />
+        <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 flex h-full flex-col items-center justify-center text-center">
           <h1 className="font-headline text-5xl md:text-7xl">
             United by Love Invitations
