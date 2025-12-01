@@ -1,3 +1,58 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero",
+      "description": "Elegant wedding invitation suite on a textured background.",
+      "imageUrl": "https://images.unsplash.com/photo-1612619732485-1ae018b63c55?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHx3ZWRkaW5nJTIwaW52aXRhdGlvbnxlbnwwfHx8fDE3NjQ1OTMzMzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "wedding invitation"
+    },
+    {
+      "id": "prod-1",
+      "description": "Classic Monogram Wedding Invitation.",
+      "imageUrl": "https://images.unsplash.com/photo-1728566814641-a204c09e61dd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8aW52aXRhdGlvbiUyMGRlc2lnbnxlbnwwfHx8fDE3NjQ1MTQ2MDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "invitation design"
+    },
+    {
+      "id": "prod-2",
+      "description": "Floral Watercolor Wedding Suite.",
+      "imageUrl": "https://images.unsplash.com/photo-1736865020500-f5aa5ffc949b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8ZmxvcmFsJTIwaW52aXRhdGlvbnxlbnwwfHx8fDE3NjQ2MDQ1NTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "floral invitation"
+    },
+    {
+      "id": "prod-3",
+      "description": "Minimalist Gold Foil Invitation.",
+      "imageUrl": "https://images.unsplash.com/photo-1580162869544-c4c0de655a02?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtaW5pbWFsaXN0JTIwaW52aXRhdGlvbnxlbnwwfHx8fDE3NjQ1OTMzMzh8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "minimalist invitation"
+    },
+    {
+      "id": "prod-4",
+      "description": "Elegant Calligraphy Place Cards.",
+      "imageUrl": "https://images.unsplash.com/photo-1542617270-ca45a284c846?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxjYWxsaWdyYXBoeSUyMGNhcmR8ZW58MHx8fHwxNzY0NjA0NTUyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "calligraphy card"
+    },
+    {
+      "id": "prod-5",
+      "description": "Luxury Vellum Wrap Invitations.",
+      "imageUrl": "https://images.unsplash.com/photo-1755540735876-ff503cf594fe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx2ZWxsdW0lMjBpbnZpdGF0aW9ufGVufDB8fHx8MTc2NDYwNDU1Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "vellum invitation"
+    },
+    {
+      "id": "prod-6",
+      "description": "Custom Wax Seal Stamps.",
+      "imageUrl": "https://images.unsplash.com/photo-1641477176034-1a3e10c343a8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx3YXglMjBzZWFsfGVufDB8fHx8MTc2NDUwNDc4OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "wax seal"
+    },
+    {
+      "id": "prod-7",
+      "description": "Personalized Thank You Cards.",
+      "imageUrl": "https://images.unsplash.com/photo-1727377202632-d69857701847?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8dGhhbmslMjB5b3UlMjBjYXJkfGVufDB8fHx8MTc2NDYwNDU1Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "thank you card"
+    },
+    {
+      "id": "prod-8",
+      "description": "Save the Date Magnets.",
+      "imageUrl": "https://images.unsplash.com/photo-1745327718611-634e05efa3b6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxzdGF0aW9uZXJ5JTIwbWFnbmV0fGVufDB8fHx8MTc2NDYwNDU1Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "stationery magnet"
+    }
+  ]
 }
