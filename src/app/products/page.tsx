@@ -2,15 +2,27 @@
 
 import { useState } from 'react';
 import ProductGrid from '@/components/products/ProductGrid';
-import { products, categories } from '@/lib/products';
 import { Button } from '@/components/ui/button';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+import type { Product } from '@/lib/products';
 
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
+  const firestore = useFirestore();
+  const productsCollection = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
+  const { data: products, isLoading } = useCollection<Product>(productsCollection);
+
+  const categories = products ? [...new Set(products.map((p) => p.category))] : [];
+
   const filteredProducts = selectedCategory
-    ? products.filter((p) => p.category === selectedCategory)
+    ? products?.filter((p) => p.category === selectedCategory)
     : products;
+
+  if (isLoading) {
+    return <p className="text-center py-16">Loading products...</p>
+  }
 
   return (
     <div className="container mx-auto px-4 py-16">
@@ -44,7 +56,7 @@ export default function ProductsPage() {
         </aside>
 
         <main className="flex-1">
-          <ProductGrid products={filteredProducts} />
+          <ProductGrid products={filteredProducts || []} />
         </main>
       </div>
     </div>

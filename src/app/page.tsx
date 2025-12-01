@@ -1,15 +1,23 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import ProductGrid from '@/components/products/ProductGrid';
-import { products } from '@/lib/products';
 import Aurora from '@/components/ui/aurora';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import type { Product } from '@/lib/products';
+import { collection } from 'firebase/firestore';
 
 export default function Home() {
-  const featuredProducts = products.slice(0, 4);
+    const firestore = useFirestore();
+    const productsCollection = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
+    const { data: products, isLoading } = useCollection<Product>(productsCollection);
+
+  const featuredProducts = products ? products.slice(0, 4) : [];
 
   return (
     <div className="flex flex-col">
-      <section className="relative h-[60vh] w-full flex items-center justify-center text-foreground bg-background">
+       <section className="relative h-[60vh] w-full flex items-center justify-center text-foreground bg-background">
         <Aurora
           colorStops={['#FFD700', '#DAA520', '#B8860B']}
           blend={0.5}
@@ -35,7 +43,7 @@ export default function Home() {
           <h2 className="mb-12 text-center font-headline text-4xl">
             Featured Products
           </h2>
-          <ProductGrid products={featuredProducts} />
+          {isLoading ? <p>Loading...</p> : <ProductGrid products={featuredProducts} />}
            <div className="mt-12 text-center">
             <Button asChild variant="outline" size="lg">
                 <Link href="/products">View All Products</Link>

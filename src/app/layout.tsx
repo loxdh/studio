@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import Navigation from '@/components/layout/Navigation';
 import Footer from '@/components/layout/Footer';
 import { CartProvider } from '@/components/cart/CartProvider';
+import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
   title: 'United Love Luxe',
@@ -37,14 +38,16 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <CartProvider>
-            <div className="flex min-h-screen flex-col">
-              <Navigation />
-              <main className="flex-grow">{children}</main>
-              <Footer />
-            </div>
-            <Toaster />
-          </CartProvider>
+          <FirebaseClientProvider>
+            <CartProvider>
+              <div className="flex min-h-screen flex-col">
+                <Navigation />
+                <main className="flex-grow">{children}</main>
+                <Footer />
+              </div>
+              <Toaster />
+            </CartProvider>
+          </FirebaseClientProvider>
         </ThemeProvider>
       </body>
     </html>
