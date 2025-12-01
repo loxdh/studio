@@ -1,8 +1,6 @@
 'use client';
-import {
-  useUser,
-} from '@/firebase';
-import { useAuth } from '@/firebase/provider';
+import { useUser } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase/provider';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -17,11 +15,16 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
 export default function LoginPage() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState('admin@example.com');
@@ -34,44 +37,63 @@ export default function LoginPage() {
   }, [user, isUserLoading, router]);
 
   const handleSignIn = async () => {
+    if (!auth || !firestore) return;
+
     try {
-        await signInWithEmailAndPassword(auth, email, password);
-        // Let the useEffect handle redirection
+      await signInWithEmailAndPassword(auth, email, password);
+      // Let the useEffect handle redirection
     } catch (error: any) {
-        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-            try {
-                await createUserWithEmailAndPassword(auth, email, password);
-                toast({
-                    title: "Account Created",
-                    description: "A new admin account has been created. You are now signed in."
-                })
-                // Let the useEffect handle redirection
-            } catch (signUpError: any) {
-                 toast({
-                    variant: 'destructive',
-                    title: 'Sign-up failed',
-                    description: signUpError.message,
-                });
-            }
-        } else if (error.code === 'auth/wrong-password') {
-            toast({
-                variant: 'destructive',
-                title: 'Sign-in failed',
-                description: 'Incorrect password. Please try again.',
-            });
+      if (
+        error.code === 'auth/user-not-found' ||
+        error.code === 'auth/invalid-credential'
+      ) {
+        try {
+          const userCredential = await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password
+          );
+          const newUser = userCredential.user;
+          
+          // Assign admin role to the new user
+          const adminRoleRef = doc(firestore, 'roles_admin', newUser.uid);
+          await setDoc(adminRoleRef, { isAdmin: true });
+
+          toast({
+            title: 'Admin Account Created',
+            description:
+              'A new admin account has been created. You are now signed in.',
+          });
+          // Let the useEffect handle redirection
+        } catch (signUpError: any) {
+          toast({
+            variant: 'destructive',
+            title: 'Sign-up failed',
+            description: signUpError.message,
+          });
         }
-        else {
-             toast({
-                variant: 'destructive',
-                title: 'Sign-in failed',
-                description: error.message,
-            });
-        }
+      } else if (error.code === 'auth/wrong-password') {
+        toast({
+          variant: 'destructive',
+          title: 'Sign-in failed',
+          description: 'Incorrect password. Please try again.',
+        });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Sign-in failed',
+          description: error.message,
+        });
+      }
     }
   };
 
   if (isUserLoading || user) {
-      return <div className="flex h-screen items-center justify-center"><p>Loading...</p></div>
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   return (
@@ -80,8 +102,8 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle className="text-2xl">Admin Login</CardTitle>
           <CardDescription>
-            Enter your email and password to access the admin dashboard.
-            If the account does not exist, it will be created.
+            Enter your email and password to access the admin dashboard. If the
+            account does not exist, it will be created as an admin.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
