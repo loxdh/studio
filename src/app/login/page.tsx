@@ -1,7 +1,5 @@
 'use client';
 import {
-  initiateEmailSignIn,
-  initiateEmailSignUp,
   useUser,
 } from '@/firebase';
 import { useAuth } from '@/firebase/provider';
@@ -19,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
 export default function LoginPage() {
   const { user, isUserLoading } = useUser();
@@ -36,15 +35,17 @@ export default function LoginPage() {
 
   const handleSignIn = async () => {
     try {
-        initiateEmailSignIn(auth, email, password);
+        await signInWithEmailAndPassword(auth, email, password);
+        // Let the useEffect handle redirection
     } catch (error: any) {
-        if (error.code === 'auth/user-not-found') {
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
             try {
-                initiateEmailSignUp(auth, email, password);
+                await createUserWithEmailAndPassword(auth, email, password);
                 toast({
                     title: "Account Created",
                     description: "A new admin account has been created. You are now signed in."
                 })
+                // Let the useEffect handle redirection
             } catch (signUpError: any) {
                  toast({
                     variant: 'destructive',
@@ -52,7 +53,14 @@ export default function LoginPage() {
                     description: signUpError.message,
                 });
             }
-        } else {
+        } else if (error.code === 'auth/wrong-password') {
+            toast({
+                variant: 'destructive',
+                title: 'Sign-in failed',
+                description: 'Incorrect password. Please try again.',
+            });
+        }
+        else {
              toast({
                 variant: 'destructive',
                 title: 'Sign-in failed',
