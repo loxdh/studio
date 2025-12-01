@@ -24,6 +24,8 @@ import { collection, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import ImageSelector from './ImageSelector';
 import { Separator } from '../ui/separator';
+import { categoriesForSelect } from '@/lib/products';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const formSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters.'),
@@ -78,6 +80,7 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
     });
 
     onProductAdded();
+    form.reset();
   }
 
   return (
@@ -128,9 +131,20 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Invitations" {...field} />
-              </FormControl>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {categoriesForSelect.map(category => (
+                    <SelectItem key={category.value} value={category.value}>
+                      {category.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -201,5 +215,3 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
     </Form>
   );
 }
-
-    

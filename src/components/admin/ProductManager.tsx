@@ -23,6 +23,7 @@ import {
 } from '../ui/dialog';
 import AddProductForm from './AddProductForm';
 import { useState } from 'react';
+import { ScrollArea } from '../ui/scroll-area';
 
 export default function ProductManager() {
   const firestore = useFirestore();
@@ -45,11 +46,13 @@ export default function ProductManager() {
           <DialogTrigger asChild>
             <Button>Add Product</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>Add a New Product</DialogTitle>
             </DialogHeader>
-            <AddProductForm onProductAdded={() => setIsDialogOpen(false)} />
+            <ScrollArea className="pr-6">
+                <AddProductForm onProductAdded={() => setIsDialogOpen(false)} />
+            </ScrollArea>
           </DialogContent>
         </Dialog>
       </div>
