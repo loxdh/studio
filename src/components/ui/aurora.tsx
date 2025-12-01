@@ -207,5 +207,5 @@ export default function Aurora(props: AuroraProps) {
     };
   }, [amplitude, blend, colorStops]);
 
-  return <div ref={ctnDom} className="w-full h-full" />;
+  return <div ref={ctnDom} className="absolute inset-0 z-0" />;
 }
