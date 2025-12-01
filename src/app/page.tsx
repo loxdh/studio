@@ -9,14 +9,14 @@ export default function Home() {
 
   return (
     <div className="flex flex-col">
-      <section className="relative h-[60vh] w-full flex items-center justify-center text-white bg-black">
+      <section className="relative h-[60vh] w-full flex items-center justify-center text-foreground bg-background">
         <Aurora
-          colorStops={["#3A29FF", "#FF94B4", "#FF3232"]}
+          colorStops={["#E0E0E0", "#C0C0C0", "#A0A0A0"]}
           blend={0.5}
           amplitude={1.0}
           speed={0.5}
         />
-        <div className="absolute inset-0 bg-black/40 z-10" />
+        <div className="absolute inset-0 bg-background/40 z-10" />
         <div className="relative z-20 flex h-full flex-col items-center justify-center text-center">
           <h1 className="font-headline text-5xl md:text-7xl">
             United by Love Invitations
@@ -24,7 +24,7 @@ export default function Home() {
           <p className="mt-4 max-w-2xl text-lg md:text-xl">
             Exquisite stationery for life's most cherished moments.
           </p>
-          <Button asChild size="lg" className="mt-8 bg-primary text-primary-foreground hover:bg-primary/90">
+          <Button asChild size="lg" className="mt-8">
             <Link href="#featured-products">Shop the Collection</Link>
           </Button>
         </div>
@@ -37,7 +37,7 @@ export default function Home() {
           </h2>
           <ProductGrid products={featuredProducts} />
            <div className="mt-12 text-center">
-            <Button asChild variant="outline" size="lg" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+            <Button asChild variant="outline" size="lg">
                 <Link href="/products">View All Products</Link>
             </Button>
           </div>
