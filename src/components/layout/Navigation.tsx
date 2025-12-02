@@ -78,9 +78,25 @@ const Navigation = () => {
     0
   );
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [isScrolled, setIsScrolled] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header
+      className={cn(
+        "fixed top-0 z-50 w-full transition-all duration-300 border-b",
+        isScrolled
+          ? "bg-background/80 backdrop-blur-md border-border shadow-sm"
+          : "bg-transparent border-transparent"
+      )}
+    >
       <div className="container flex h-16 items-center">
         <Link href="/" className="mr-6 flex items-center space-x-2">
           <BookHeart className="h-6 w-6 text-primary" />
