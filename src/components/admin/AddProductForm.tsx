@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -19,13 +18,15 @@ import {
   useFirestore,
   addDocumentNonBlocking,
   useMemoFirebase,
+  useCollection
 } from '@/firebase';
-import { collection, serverTimestamp } from 'firebase/firestore';
+import { collection, serverTimestamp, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import ImageSelector from './ImageSelector';
 import { Separator } from '../ui/separator';
 import { categoriesForSelect } from '@/lib/products';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import Link from 'next/link';
 
 const formSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters.'),
@@ -39,8 +40,13 @@ const formSchema = z.object({
 });
 
 type AddProductFormProps = {
-    onProductAdded: () => void;
+  onProductAdded: () => void;
 }
+
+type Category = {
+  id: string;
+  name: string;
+};
 
 export default function AddProductForm({ onProductAdded }: AddProductFormProps) {
   const firestore = useFirestore();
@@ -48,6 +54,14 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
     () => collection(firestore, 'products'),
     [firestore]
   );
+
+  const categoriesCollection = useMemoFirebase(
+    () => query(collection(firestore, 'categories'), orderBy('name')),
+    [firestore]
+  );
+
+  const { data: dbCategories, isLoading: isLoadingCategories } = useCollection<Category>(categoriesCollection);
+
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -73,15 +87,20 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
     };
 
     addDocumentNonBlocking(productsCollection, newProduct);
-    
+
     toast({
-        title: "Product Added",
-        description: `${values.name} has been added to the catalog.`
+      title: "Product Added",
+      description: `${values.name} has been added to the catalog.`
     });
 
     onProductAdded();
     form.reset();
   }
+
+  // Merge hardcoded and DB categories, preferring DB
+  const availableCategories = dbCategories && dbCategories.length > 0
+    ? dbCategories.map(c => ({ label: c.name, value: c.name }))
+    : categoriesForSelect;
 
   return (
     <Form {...form}>
@@ -134,31 +153,34 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
+                    <SelectValue placeholder={isLoadingCategories ? "Loading categories..." : "Select a category"} />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {categoriesForSelect.map(category => (
+                  {availableCategories.map(category => (
                     <SelectItem key={category.value} value={category.value}>
                       {category.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <div className="text-xs text-muted-foreground mt-1">
+                Don't see your category? <Link href="/admin/categories" className="text-primary hover:underline">Add it here</Link>.
+              </div>
               <FormMessage />
             </FormItem>
           )}
         />
-         <FormField
+        <FormField
           control={form.control}
           name="image"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Product Image</FormLabel>
               <FormControl>
-                <ImageSelector 
-                    selectedImageId={field.value}
-                    onImageSelect={field.onChange}
+                <ImageSelector
+                  selectedImageId={field.value}
+                  onImageSelect={field.onChange}
                 />
               </FormControl>
               <FormMessage />
@@ -167,7 +189,7 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
         />
 
         <Separator className="my-6" />
-        
+
         <h3 className="text-lg font-medium">SEO Details</h3>
         <p className="text-sm text-muted-foreground -mt-2 mb-4">Optional, but recommended for better search ranking.</p>
 
@@ -184,7 +206,7 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
             </FormItem>
           )}
         />
-         <FormField
+        <FormField
           control={form.control}
           name="metaDescription"
           render={({ field }) => (

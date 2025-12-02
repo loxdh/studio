@@ -1,90 +1,49 @@
 'use client';
-import { useUser } from '@/firebase';
-import { useAuth, useFirestore } from '@/firebase/provider';
+
+import { useUser, useAuth } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-} from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import Link from 'next/link';
+import Aurora from '@/components/ui/aurora';
+import FadeIn from '@/components/ui/fade-in';
 
 export default function LoginPage() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
-  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
-  const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('password');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      router.push('/admin');
+      router.push('/account');
     }
   }, [user, isUserLoading, router]);
 
-  const handleSignIn = async () => {
-    if (!auth || !firestore) return;
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!auth) return;
 
+    setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
       // Let the useEffect handle redirection
     } catch (error: any) {
-      if (
-        error.code === 'auth/user-not-found' ||
-        error.code === 'auth/invalid-credential'
-      ) {
-        try {
-          const userCredential = await createUserWithEmailAndPassword(
-            auth,
-            email,
-            password
-          );
-          const newUser = userCredential.user;
-          
-          // Assign admin role to the new user
-          const adminRoleRef = doc(firestore, 'roles_admin', newUser.uid);
-          await setDoc(adminRoleRef, { isAdmin: true });
-
-          toast({
-            title: 'Admin Account Created',
-            description:
-              'A new admin account has been created. You are now signed in.',
-          });
-          // Let the useEffect handle redirection
-        } catch (signUpError: any) {
-          toast({
-            variant: 'destructive',
-            title: 'Sign-up failed',
-            description: signUpError.message,
-          });
-        }
-      } else if (error.code === 'auth/wrong-password') {
-        toast({
-          variant: 'destructive',
-          title: 'Sign-in failed',
-          description: 'Incorrect password. Please try again.',
-        });
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Sign-in failed',
-          description: error.message,
-        });
-      }
+      toast({
+        variant: 'destructive',
+        title: 'Sign-in failed',
+        description: "Invalid email or password.",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -97,44 +56,63 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] items-center justify-center">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl">Admin Login</CardTitle>
-          <CardDescription>
-            Enter your email and password to access the admin dashboard. If the
-            account does not exist, it will be created as an admin.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="m@example.com"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-        </CardContent>
-        <CardFooter>
-          <Button className="w-full" onClick={handleSignIn}>
-            Sign in
-          </Button>
-        </CardFooter>
-      </Card>
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 z-0">
+        <Aurora
+          colorStops={['#FFD700', '#DAA520', '#B8860B']}
+          blend={0.5}
+          amplitude={1.0}
+          speed={0.5}
+        />
+        <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
+      </div>
+
+      <FadeIn className="relative z-10 w-full max-w-md px-4">
+        <Card className="w-full bg-background/95 backdrop-blur shadow-xl border-muted">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-headline text-center">Welcome Back</CardTitle>
+            <CardDescription className="text-center">
+              Enter your email to sign in to your account
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSignIn} className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <Button className="w-full mt-4" type="submit" disabled={isLoading}>
+                {isLoading ? 'Signing In...' : 'Sign In'}
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-2">
+            <div className="text-sm text-center text-muted-foreground">
+              Don&apos;t have an account?{' '}
+              <Link href="/signup" className="text-primary hover:underline">
+                Sign up
+              </Link>
+            </div>
+          </CardFooter>
+        </Card>
+      </FadeIn>
     </div>
   );
 }

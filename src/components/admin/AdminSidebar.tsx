@@ -7,12 +7,18 @@ import {
   Package,
   FileText,
   BookHeart,
+  ShoppingBag,
+  List,
+  Image as ImageIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
+  { href: '/admin/orders', icon: ShoppingBag, label: 'Orders' },
   { href: '/admin/products', icon: Package, label: 'Products' },
+  { href: '/admin/categories', icon: List, label: 'Categories' },
+  { href: '/admin/media', icon: ImageIcon, label: 'Media Library' },
   { href: '/admin/blog', icon: FileText, label: 'Blog Manager' },
 ];
 

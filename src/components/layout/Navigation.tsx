@@ -29,43 +29,44 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import SearchBar from './SearchBar';
 
 const weddingInvitations = [
-  { title: 'Acrylic Invitations', href: '/products/wedding-invitations/acrylic' },
-  { title: 'Velvet Invitations', href: '/products/wedding-invitations/velvet' },
-  { title: 'Vellum Invitations', href: '/products/wedding-invitations/vellum' },
-  { title: 'Paper Invitations', href: '/products/wedding-invitations/paper' },
-  { title: 'Thick Block Invitations', href: '/products/wedding-invitations/thick-block' },
+  { title: 'Acrylic Invitations', href: '/products?category=Wedding Invitations' },
+  { title: 'Velvet Invitations', href: '/products?category=Wedding Invitations' },
+  { title: 'Vellum Invitations', href: '/products?category=Wedding Invitations' },
+  { title: 'Paper Invitations', href: '/products?category=Wedding Invitations' },
+  { title: 'Thick Block Invitations', href: '/products?category=Wedding Invitations' },
 ];
 
 const saveTheDates = [
-  { title: 'Passport Save the Dates', href: '/products/save-the-dates/passport' },
-  { title: 'Ticket Save the Dates', href: '/products/save-the-dates/ticket' },
-  { title: 'Paper Save the Dates', href: '/products/save-the-dates/paper' },
-  { title: 'Embossed Save the Dates', href: '/products/save-the-dates/embossed' },
-  { title: 'Interactive Save the Dates', href: '/products/save-the-dates/interactive' },
-  { title: 'Gatefold Save the Dates', href: '/products/save-the-dates/gatefold' },
-  { title: 'Vellum Save the Dates', href: '/products/save-the-dates/vellum' },
-  { title: 'Arc Save the Dates', href: '/products/save-the-dates/arc' },
-  { title: 'Kraft Save the Dates', href: '/products/save-the-dates/kraft' },
+  { title: 'Passport Save the Dates', href: '/products?category=Save the Dates' },
+  { title: 'Ticket Save the Dates', href: '/products?category=Save the Dates' },
+  { title: 'Paper Save the Dates', href: '/products?category=Save the Dates' },
+  { title: 'Embossed Save the Dates', href: '/products?category=Save the Dates' },
+  { title: 'Interactive Save the Dates', href: '/products?category=Save the Dates' },
+  { title: 'Gatefold Save the Dates', href: '/products?category=Save the Dates' },
+  { title: 'Vellum Save the Dates', href: '/products?category=Save the Dates' },
+  { title: 'Arc Save the Dates', href: '/products?category=Save the Dates' },
+  { title: 'Kraft Save the Dates', href: '/products?category=Save the Dates' },
 ];
 
 const boxAndFolio = [
-    { title: 'Velvet Boxed Invitations', href: '/products/box-folio/velvet-boxed' },
-    { title: 'Paper Boxed Invitations', href: '/products/box-folio/paper-boxed' },
-    { title: 'Velvet Folios', href: '/products/box-folio/velvet-folios' },
-    { title: 'Paper Folios', href: '/products/box-folio/paper-folios' },
+  { title: 'Velvet Boxed Invitations', href: '/products?category=Box & Folio Invitations' },
+  { title: 'Paper Boxed Invitations', href: '/products?category=Box & Folio Invitations' },
+  { title: 'Velvet Folios', href: '/products?category=Box & Folio Invitations' },
+  { title: 'Paper Folios', href: '/products?category=Box & Folio Invitations' },
 ]
 
 const insertsAndAddons = [
-    { title: 'RSVP Cards', href: '/products/inserts-addons/rsvp' },
-    { title: 'Return Envelopes', href: '/products/inserts-addons/envelopes' },
-    { title: 'Details Cards', href: '/products/inserts-addons/details' },
-    { title: 'Menu Cards', href: '/products/inserts-addons/menu' },
-    { title: 'Place Cards', href: '/products/inserts-addons/place-cards' },
-    { title: 'Table Cards', href: '/products/inserts-addons/table-cards' },
-    { title: 'Guest Addressing Labels', href: '/products/inserts-addons/labels' },
-    { title: 'Clear/White/Kraft Seals', href: '/products/inserts-addons/seals' },
+  { title: 'RSVP Cards', href: '/products?category=Inserts & Add-Ons' },
+  { title: 'Return Envelopes', href: '/products?category=Inserts & Add-Ons' },
+  { title: 'Details Cards', href: '/products?category=Inserts & Add-Ons' },
+  { title: 'Menu Cards', href: '/products?category=Inserts & Add-Ons' },
+  { title: 'Place Cards', href: '/products?category=Inserts & Add-Ons' },
+  { title: 'Table Cards', href: '/products?category=Inserts & Add-Ons' },
+  { title: 'Guest Addressing Labels', href: '/products?category=Inserts & Add-Ons' },
+  { title: 'Clear/White/Kraft Seals', href: '/products?category=Inserts & Add-Ons' },
 ]
 
 const Navigation = () => {
@@ -85,9 +86,9 @@ const Navigation = () => {
             United Love Luxe
           </span>
         </Link>
-        
+
         {/* Desktop Nav */}
-        <div className="mr-4 hidden md:flex">
+        <div className="mr-4 hidden lg:flex">
           <NavigationMenu>
             <NavigationMenuList>
               <NavigationMenuItem>
@@ -124,7 +125,7 @@ const Navigation = () => {
                 </NavigationMenuContent>
               </NavigationMenuItem>
               <NavigationMenuItem>
-                <NavigationMenuTrigger>Box & Folio Invitations</NavigationMenuTrigger>
+                <NavigationMenuTrigger>Box & Folio</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
                     {boxAndFolio.map((component) => (
@@ -137,8 +138,8 @@ const Navigation = () => {
                   </ul>
                 </NavigationMenuContent>
               </NavigationMenuItem>
-               <NavigationMenuItem>
-                <NavigationMenuTrigger>Inserts & Add-Ons</NavigationMenuTrigger>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger>Add-Ons</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] ">
                     {insertsAndAddons.map((component) => (
@@ -153,12 +154,17 @@ const Navigation = () => {
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link href="/blog">Blog</Link>
+                  <Link href="/products?category=Custom Services">Custom Design</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link href="/my-account">My Account</Link>
+                  <Link href="/about">About</Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                  <Link href="/contact">Contact</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
             </NavigationMenuList>
@@ -168,7 +174,7 @@ const Navigation = () => {
         {/* Mobile Nav */}
         <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="md:hidden">
+            <Button variant="ghost" size="icon" className="lg:hidden">
               <Menu className="h-6 w-6" />
               <span className="sr-only">Toggle Menu</span>
             </Button>
@@ -186,15 +192,15 @@ const Navigation = () => {
             </SheetHeader>
             <div className="mt-8 flex flex-col space-y-4">
               <Link href="/" className="py-2" onClick={() => setMobileMenuOpen(false)}>Home</Link>
-              
+
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="wedding-invites">
                   <AccordionTrigger className="py-2">Wedding Invitations</AccordionTrigger>
                   <AccordionContent className="pl-4">
                     <div className='flex flex-col space-y-2 mt-2'>
-                    {weddingInvitations.map(item => (
-                      <Link key={item.href} href={item.href} className="py-1 text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>{item.title}</Link>
-                    ))}
+                      {weddingInvitations.map(item => (
+                        <Link key={item.href} href={item.href} className="py-1 text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>{item.title}</Link>
+                      ))}
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -202,9 +208,9 @@ const Navigation = () => {
                   <AccordionTrigger className="py-2">Save the Dates</AccordionTrigger>
                   <AccordionContent className="pl-4">
                     <div className='flex flex-col space-y-2 mt-2'>
-                    {saveTheDates.map(item => (
-                      <Link key={item.href} href={item.href} className="py-1 text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>{item.title}</Link>
-                    ))}
+                      {saveTheDates.map(item => (
+                        <Link key={item.href} href={item.href} className="py-1 text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>{item.title}</Link>
+                      ))}
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -212,9 +218,9 @@ const Navigation = () => {
                   <AccordionTrigger className="py-2">Box & Folio Invitations</AccordionTrigger>
                   <AccordionContent className="pl-4">
                     <div className='flex flex-col space-y-2 mt-2'>
-                    {boxAndFolio.map(item => (
-                      <Link key={item.href} href={item.href} className="py-1 text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>{item.title}</Link>
-                    ))}
+                      {boxAndFolio.map(item => (
+                        <Link key={item.href} href={item.href} className="py-1 text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>{item.title}</Link>
+                      ))}
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -222,21 +228,30 @@ const Navigation = () => {
                   <AccordionTrigger className="py-2">Inserts & Add-Ons</AccordionTrigger>
                   <AccordionContent className="pl-4">
                     <div className='flex flex-col space-y-2 mt-2'>
-                    {insertsAndAddons.map(item => (
-                      <Link key={item.href} href={item.href} className="py-1 text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>{item.title}</Link>
-                    ))}
+                      {insertsAndAddons.map(item => (
+                        <Link key={item.href} href={item.href} className="py-1 text-muted-foreground" onClick={() => setMobileMenuOpen(false)}>{item.title}</Link>
+                      ))}
                     </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
 
+              <Link href="/products?category=Custom Services" className="py-2" onClick={() => setMobileMenuOpen(false)}>Custom Design</Link>
+              <Link href="/about" className="py-2" onClick={() => setMobileMenuOpen(false)}>About</Link>
+              <Link href="/contact" className="py-2" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
               <Link href="/blog" className="py-2" onClick={() => setMobileMenuOpen(false)}>Blog</Link>
-              <Link href="/my-account" className="py-2" onClick={() => setMobileMenuOpen(false)}>My Account</Link>
+              <Link href="/account" className="py-2" onClick={() => setMobileMenuOpen(false)}>My Account</Link>
             </div>
           </SheetContent>
         </Sheet>
-        
+
         <div className="flex flex-1 items-center justify-end space-x-2">
+          <div className="hidden md:block mr-2">
+            <SearchBar />
+          </div>
+          <Button asChild variant="ghost" className="hidden lg:flex">
+            <Link href="/account">My Account</Link>
+          </Button>
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">

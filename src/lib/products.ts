@@ -1,4 +1,6 @@
 
+export type ProductType = 'premade' | 'custom';
+
 export type Product = {
   id: string;
   name: string;
@@ -10,16 +12,19 @@ export type Product = {
   metaTitle?: string;
   metaDescription?: string;
   metaKeywords?: string;
+  productType?: ProductType;
+  customizationOptions?: string[]; // For premade: e.g. ["Names", "Date", "Venue"]
 };
 
 const productCategories = [
-    "Wedding Invitations",
-    "Save the Dates",
-    "Box & Folio Invitations",
-    "Inserts & Add-Ons"
+  "Wedding Invitations",
+  "Save the Dates",
+  "Box & Folio Invitations",
+  "Inserts & Add-Ons",
+  "Custom Services"
 ]
 
-export const categoriesForSelect = productCategories.map(c => ({ label: c, value: c}));
+export const categoriesForSelect = productCategories.map(c => ({ label: c, value: c }));
 
 
 export const products: Product[] = [
@@ -32,7 +37,9 @@ export const products: Product[] = [
     description: 'Timeless elegance meets modern design. Our classic monogram invitations are printed on thick, luxurious cardstock with your choice of gold, silver, or rose gold foil.',
     image: 'prod-1',
     metaTitle: 'Classic Monogram Wedding Invitation | United Love Luxe',
-    metaDescription: 'Timeless and elegant classic monogram wedding invitations printed on luxurious cardstock with foil options.'
+    metaDescription: 'Timeless and elegant classic monogram wedding invitations printed on luxurious cardstock with foil options.',
+    productType: 'premade',
+    customizationOptions: ['Couple Names', 'Event Date', 'Venue', 'Time', 'RSVP Date']
   },
   {
     id: '2',
@@ -43,7 +50,9 @@ export const products: Product[] = [
     description: 'A romantic and artistic choice, this suite features a delicate watercolor floral design. Fully customizable with your event details.',
     image: 'prod-2',
     metaTitle: 'Floral Watercolor Wedding Suite | United Love Luxe',
-    metaDescription: 'Romantic and artistic floral watercolor wedding invitation suite, fully customizable.'
+    metaDescription: 'Romantic and artistic floral watercolor wedding invitation suite, fully customizable.',
+    productType: 'premade',
+    customizationOptions: ['Couple Names', 'Event Date', 'Venue', 'Time']
   },
   {
     id: '3',
@@ -54,7 +63,9 @@ export const products: Product[] = [
     description: 'For the modern couple, this invitation features clean typography and a touch of stunning gold foil on premium cotton paper.',
     image: 'prod-3',
     metaTitle: 'Minimalist Gold Foil Invitation | United Love Luxe',
-    metaDescription: 'Modern and minimalist wedding invitation with clean typography and stunning gold foil.'
+    metaDescription: 'Modern and minimalist wedding invitation with clean typography and stunning gold foil.',
+    productType: 'premade',
+    customizationOptions: ['Couple Names', 'Event Date', 'Venue', 'Time']
   },
   {
     id: '4',
@@ -65,7 +76,9 @@ export const products: Product[] = [
     description: 'Guide your guests to their seats with these beautifully lettered place cards. Available in a variety of ink and paper colors.',
     image: 'prod-4',
     metaTitle: 'Elegant Calligraphy Place Cards | United Love Luxe',
-    metaDescription: 'Beautifully lettered calligraphy place cards to guide your guests to their seats.'
+    metaDescription: 'Beautifully lettered calligraphy place cards to guide your guests to their seats.',
+    productType: 'premade',
+    customizationOptions: ['Guest List (Upload later)', 'Ink Color']
   },
   {
     id: '5',
@@ -76,7 +89,9 @@ export const products: Product[] = [
     description: 'Add a layer of sophistication with a translucent vellum wrap, secured with a wax seal or silk ribbon. A truly memorable first impression.',
     image: 'prod-5',
     metaTitle: 'Luxury Vellum Wrap Invitations | United Love Luxe',
-    metaDescription: 'Sophisticated and luxurious vellum wrap wedding invitations with wax seal or silk ribbon.'
+    metaDescription: 'Sophisticated and luxurious vellum wrap wedding invitations with wax seal or silk ribbon.',
+    productType: 'premade',
+    customizationOptions: ['Couple Names', 'Event Date', 'Venue', 'Time']
   },
   {
     id: '6',
@@ -87,7 +102,9 @@ export const products: Product[] = [
     description: 'Personalize your stationery with a custom brass wax seal stamp featuring your initials, monogram, or custom artwork.',
     image: 'prod-6',
     metaTitle: 'Custom Wax Seal Stamps | United Love Luxe',
-    metaDescription: 'Personalize your stationery with a custom brass wax seal stamp with your initials or artwork.'
+    metaDescription: 'Personalize your stationery with a custom brass wax seal stamp with your initials or artwork.',
+    productType: 'premade',
+    customizationOptions: ['Initials', 'Design Style']
   },
   {
     id: '7',
@@ -98,7 +115,9 @@ export const products: Product[] = [
     description: 'Express your gratitude in style with these personalized thank you cards, foiled with your names or monogram.',
     image: 'prod-7',
     metaTitle: 'Personalized Thank You Cards | United Love Luxe',
-    metaDescription: 'Express your gratitude with stylish personalized thank you cards with your monogram.'
+    metaDescription: 'Express your gratitude with stylish personalized thank you cards with your monogram.',
+    productType: 'premade',
+    customizationOptions: ['Names/Monogram', 'Foil Color']
   },
   {
     id: '8',
@@ -109,8 +128,22 @@ export const products: Product[] = [
     description: 'A fun and functional way to announce your date. Our save the date magnets are printed on high-quality material with a beautiful matte finish.',
     image: 'prod-8',
     metaTitle: 'Save the Date Magnets | United Love Luxe',
-    metaDescription: 'Fun and functional save the date magnets printed on high-quality material.'
+    metaDescription: 'Fun and functional save the date magnets printed on high-quality material.',
+    productType: 'premade',
+    customizationOptions: ['Couple Names', 'Date', 'Location']
   },
+  {
+    id: '9',
+    name: 'Bespoke Custom Invitation Suite',
+    slug: 'bespoke-custom-invitation-suite',
+    category: 'Custom Services',
+    price: 10.0, // Base price, will scale
+    description: 'Create your dream invitation suite from scratch. Choose your paper, printing method, colors, and more.',
+    image: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=2000&auto=format&fit=crop', // Placeholder
+    metaTitle: 'Bespoke Custom Invitation Suite | United Love Luxe',
+    metaDescription: 'Design your own custom wedding invitation suite from scratch.',
+    productType: 'custom'
+  }
 ];
 
 export const categories = [
