@@ -14,12 +14,24 @@ export async function getAllProducts(): Promise<Product[]> {
 }
 
 export async function getProductBySlug(slug: string): Promise<Product | null> {
+    // 1. Try Firestore first
     const productsRef = collection(db, 'products');
     const q = query(productsRef, where('slug', '==', slug), limit(1));
-    const snapshot = await getDocs(q);
 
-    if (snapshot.empty) return null;
-    return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Product;
+    try {
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+            return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Product;
+        }
+    } catch (error) {
+        console.warn("Firestore fetch failed, falling back to static data:", error);
+    }
+
+    // 2. Fallback to static data
+    const { products } = await import('./products');
+    const staticProduct = products.find(p => p.slug === slug);
+
+    return staticProduct || null;
 }
 
 export async function getAllBlogPosts(): Promise<any[]> {
