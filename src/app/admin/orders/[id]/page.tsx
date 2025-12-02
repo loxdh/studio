@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Loader2, Package, Truck, MapPin, CreditCard } from 'lucide-react';
+import { ArrowLeft, Loader2, Package, Truck, MapPin, CreditCard, Printer } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import Image from 'next/image';
@@ -104,6 +104,12 @@ export default function AdminOrderDetailPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href={`/admin/orders/${id}/packing-slip`} target="_blank">
+                            <Printer className="h-4 w-4 mr-2" />
+                            Print Slip
+                        </Link>
+                    </Button>
                     <Select
                         defaultValue={order.status}
                         onValueChange={handleStatusChange}

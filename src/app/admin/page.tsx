@@ -5,6 +5,8 @@ import { Package, FileText, Users, ShoppingBag, DollarSign } from 'lucide-react'
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 
+import AdminCharts from '@/components/admin/AdminCharts';
+
 export default function AdminDashboardPage() {
   const firestore = useFirestore();
 
@@ -76,6 +78,9 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {orders && <AdminCharts orders={orders} />}
+
       <div className="mt-8">
         <Card>
           <CardHeader>

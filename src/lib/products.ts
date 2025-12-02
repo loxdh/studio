@@ -1,5 +1,5 @@
 
-export type ProductType = 'premade' | 'custom';
+export type ProductType = 'premade' | 'custom' | 'service';
 
 export type Product = {
   id: string;

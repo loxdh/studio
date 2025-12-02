@@ -21,9 +21,9 @@ export default function AdminLayout({
 
   if (isUserLoading || !user) {
     return (
-        <div className="flex h-screen items-center justify-center">
-            <p>Loading...</p>
-        </div>
+      <div className="flex h-screen items-center justify-center">
+        <p>Loading...</p>
+      </div>
     )
   }
 

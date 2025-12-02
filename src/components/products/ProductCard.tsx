@@ -1,3 +1,5 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Product } from '@/lib/products';
@@ -8,6 +10,10 @@ import {
   CardHeader,
 } from '@/components/ui/card';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { Button } from '@/components/ui/button';
+import { Heart } from 'lucide-react';
+import { useWishlist } from '@/hooks/useWishlist';
+import { cn } from '@/lib/utils';
 
 type ProductCardProps = {
   product: Product;
@@ -17,10 +23,22 @@ const ProductCard = ({ product }: ProductCardProps) => {
   const productImage = PlaceHolderImages.find(
     (img) => img.id === product.image
   );
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const inWishlist = isInWishlist(product.id);
+
+  const toggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (inWishlist) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
+  };
 
   return (
-    <Link href={`/products/${product.slug}`}>
-      <Card className="group overflow-hidden rounded-lg border-2 border-transparent transition-all hover:border-primary hover:shadow-xl">
+    <Link href={`/products/${product.slug}`} className="block relative group">
+      <Card className="overflow-hidden rounded-lg border-2 border-transparent transition-all hover:border-primary hover:shadow-xl">
         <CardHeader className="p-0">
           <div className="relative h-96 w-full">
             {(productImage || product.image.startsWith('http')) && (
@@ -33,6 +51,17 @@ const ProductCard = ({ product }: ProductCardProps) => {
                 data-ai-hint={productImage?.imageHint}
               />
             )}
+            <Button
+              size="icon"
+              variant="secondary"
+              className={cn(
+                "absolute top-2 right-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity",
+                inWishlist && "opacity-100 text-red-500 bg-white/90 hover:bg-white"
+              )}
+              onClick={toggleWishlist}
+            >
+              <Heart className={cn("h-5 w-5", inWishlist && "fill-current")} />
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-4">

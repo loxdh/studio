@@ -131,7 +131,8 @@ export default function Aurora(props: AuroraProps) {
     const renderer = new Renderer({
       alpha: true,
       premultipliedAlpha: true,
-      antialias: true
+      antialias: true,
+      dpr: Math.min(window.devicePixelRatio, 2)
     });
     const gl = renderer.gl;
     gl.clearColor(0, 0, 0, 0);
@@ -193,12 +194,26 @@ export default function Aurora(props: AuroraProps) {
         renderer.render({ scene: mesh });
       }
     };
-    animateId = requestAnimationFrame(update);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            if (!animateId) animateId = requestAnimationFrame(update);
+          } else {
+            cancelAnimationFrame(animateId);
+            animateId = 0;
+          }
+        });
+      },
+      { threshold: 0 }
+    );
+    observer.observe(ctn);
 
     resize();
 
     return () => {
       cancelAnimationFrame(animateId);
+      observer.disconnect();
       window.removeEventListener('resize', resize);
       if (ctn && gl.canvas.parentNode === ctn) {
         ctn.removeChild(gl.canvas);

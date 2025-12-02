@@ -14,12 +14,42 @@ export const metadata: Metadata = {
     default: 'United Love Luxe | Luxury Wedding Stationery',
     template: '%s | United Love Luxe',
   },
-  description: 'Bespoke and semi-custom wedding invitations, save the dates, and fine stationery for the modern romantic.',
+  description: 'Bespoke and semi-custom wedding invitations, save the dates, and fine stationery for the modern romantic. Specializing in acrylic, vellum, and foil-pressed designs.',
+  keywords: ['wedding invitations', 'luxury stationery', 'acrylic invitations', 'vellum invitations', 'foil pressed', 'custom wedding design', 'bespoke stationery', 'wedding invites'],
+  authors: [{ name: 'United Love Luxe' }],
+  creator: 'United Love Luxe',
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: 'https://unitedloveluxe.com',
     siteName: 'United Love Luxe',
+    title: 'United Love Luxe | Luxury Wedding Stationery',
+    description: 'Bespoke and semi-custom wedding invitations, save the dates, and fine stationery for the modern romantic.',
+    images: [
+      {
+        url: '/og-image.jpg', // We should ensure this image exists or use a placeholder
+        width: 1200,
+        height: 630,
+        alt: 'United Love Luxe - Luxury Wedding Stationery',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'United Love Luxe | Luxury Wedding Stationery',
+    description: 'Bespoke and semi-custom wedding invitations, save the dates, and fine stationery for the modern romantic.',
+    images: ['/og-image.jpg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
   },
 };
 

@@ -7,15 +7,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCart } from '@/hooks/useCart';
-import { Minus, Plus } from 'lucide-react';
+import { Minus, Plus, Heart } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import Link from 'next/link';
-import ReviewForm from './ReviewForm';
-import ReviewList from './ReviewList';
+import dynamic from 'next/dynamic';
+import { useWishlist } from '@/hooks/useWishlist';
+
+const ReviewForm = dynamic(() => import('./ReviewForm'), { ssr: false });
+const ReviewList = dynamic(() => import('./ReviewList'), { ssr: false });
+import { cn } from '@/lib/utils';
+import SocialShare from './SocialShare';
 
 type ProductDetailClientProps = {
   product: Product;
@@ -28,11 +33,22 @@ export default function ProductDetailClient({
     (img) => img.id === product.image
   );
   const { addToCart } = useCart();
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const [quantity, setQuantity] = useState(1);
   const [customizations, setCustomizations] = useState<Record<string, string>>({});
 
+  const inWishlist = isInWishlist(product.id);
+
   const handleAddToCart = () => {
     addToCart(product, quantity, customizations);
+  };
+
+  const toggleWishlist = () => {
+    if (inWishlist) {
+      removeFromWishlist(product.id);
+    } else {
+      addToWishlist(product);
+    }
   };
 
   const increment = () => setQuantity(q => q + 1);
@@ -82,6 +98,7 @@ export default function ProductDetailClient({
             <div>
               <h1 className="font-headline text-4xl mb-2">{product.name}</h1>
               <p className="text-muted-foreground">{product.description}</p>
+              <SocialShare productUrl={`/products/${product.slug}`} productName={product.name} />
             </div>
 
             <div className="space-y-6 border p-6 rounded-lg bg-card">
@@ -143,6 +160,9 @@ export default function ProductDetailClient({
               <Button size="lg" onClick={handleAddToCart} className="flex-1" disabled={!paperType || !printMethod}>
                 Add to Quote / Cart
               </Button>
+              <Button size="icon" variant="outline" className="h-12 w-12" onClick={toggleWishlist}>
+                <Heart className={cn("h-6 w-6", inWishlist && "fill-current text-red-500")} />
+              </Button>
             </div>
           </div>
         </div>
@@ -199,6 +219,8 @@ export default function ProductDetailClient({
             {product.description}
           </p>
 
+          <SocialShare productUrl={`/products/${product.slug}`} productName={product.name} />
+
           {/* Customization Fields for Premade */}
           {product.customizationOptions && (
             <div className="mt-8 space-y-4 border-t pt-6">
@@ -232,6 +254,9 @@ export default function ProductDetailClient({
             </div>
             <Button size="lg" onClick={handleAddToCart} className="flex-1">
               Add to Cart
+            </Button>
+            <Button size="icon" variant="outline" className="h-12 w-12" onClick={toggleWishlist}>
+              <Heart className={cn("h-6 w-6", inWishlist && "fill-current text-red-500")} />
             </Button>
           </div>
         </div>

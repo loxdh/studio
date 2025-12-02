@@ -1,7 +1,7 @@
 'use client';
 import React from 'react';
 import Link from 'next/link';
-import { BookHeart, Menu, ShoppingBag } from 'lucide-react';
+import { BookHeart, Menu, ShoppingBag, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import {
@@ -30,6 +30,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import SearchBar from './SearchBar';
+import { useWishlist } from '@/hooks/useWishlist';
 
 const weddingInvitations = [
   { title: 'Acrylic Invitations', href: '/products?category=Wedding Invitations' },
@@ -71,6 +72,7 @@ const insertsAndAddons = [
 
 const Navigation = () => {
   const { cartItems } = useCart();
+  const { wishlistItems } = useWishlist();
   const totalItems = cartItems.reduce(
     (total, item) => total + item.quantity,
     0
@@ -154,7 +156,7 @@ const Navigation = () => {
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link href="/products?category=Custom Services">Custom Design</Link>
+                  <Link href="/custom-design">Custom Design</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
@@ -236,11 +238,12 @@ const Navigation = () => {
                 </AccordionItem>
               </Accordion>
 
-              <Link href="/products?category=Custom Services" className="py-2" onClick={() => setMobileMenuOpen(false)}>Custom Design</Link>
+              <Link href="/custom-design" className="py-2" onClick={() => setMobileMenuOpen(false)}>Custom Design</Link>
               <Link href="/about" className="py-2" onClick={() => setMobileMenuOpen(false)}>About</Link>
               <Link href="/contact" className="py-2" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
               <Link href="/blog" className="py-2" onClick={() => setMobileMenuOpen(false)}>Blog</Link>
               <Link href="/account" className="py-2" onClick={() => setMobileMenuOpen(false)}>My Account</Link>
+              <Link href="/wishlist" className="py-2" onClick={() => setMobileMenuOpen(false)}>Wishlist</Link>
             </div>
           </SheetContent>
         </Sheet>
@@ -249,6 +252,17 @@ const Navigation = () => {
           <div className="hidden md:block mr-2">
             <SearchBar />
           </div>
+          <Button asChild variant="ghost" size="icon" className="hidden lg:flex relative">
+            <Link href="/wishlist">
+              <Heart className="h-5 w-5" />
+              {wishlistItems.length > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
+                  {wishlistItems.length}
+                </span>
+              )}
+              <span className="sr-only">Wishlist</span>
+            </Link>
+          </Button>
           <Button asChild variant="ghost" className="hidden lg:flex">
             <Link href="/account">My Account</Link>
           </Button>

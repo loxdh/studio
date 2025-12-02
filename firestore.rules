@@ -62,10 +62,6 @@ service cloud.firestore {
      * @description Controls access to the products collection.
      *   Products are publicly visible to all users, but only admins can
      *   create, update, or delete them.
-     * @path /products/{productId}
-     * @allow (get) Any user, signed in or not, can view a single product.
-     * @deny (create) A non-admin user cannot create a new product.
-     * @principle Implements a "Public Read, Admin-Only Write" access pattern.
      */
     match /products/{productId} {
       allow get: if true;
@@ -79,10 +75,6 @@ service cloud.firestore {
      * @description Controls access to the categories collection.
      *   Categories are publicly visible, allowing users to browse products by
      *   category, but only admins can manage the category list.
-     * @path /categories/{categoryId}
-     * @allow (list) Any user, signed in or not, can list all categories.
-     * @deny (delete) An authenticated but non-admin user cannot delete a category.
-     * @principle Implements a "Public Read, Admin-Only Write" access pattern.
      */
     match /categories/{categoryId} {
       allow get: if true;
@@ -96,10 +88,6 @@ service cloud.firestore {
      * @description Controls access to the blog articles collection.
      *   Blog articles are public content for all site visitors. Write access
      *   is restricted to admins for content management.
-     * @path /blog_articles/{blogArticleId}
-     * @allow (get) Any user can read a blog article.
-     * @deny (update) A non-admin user cannot edit an existing blog article.
-     * @principle Implements a "Public Read, Admin-Only Write" access pattern.
      */
     match /blog_articles/{blogArticleId} {
       allow get: if true;
@@ -114,12 +102,6 @@ service cloud.firestore {
      *   This collection is the source of truth for admin privileges. Only
      *   existing admins are allowed to see who the other admins are or to
      *   grant/revoke admin status.
-     * @path /roles_admin/{userId}
-     * @allow (create) An existing admin can create a document to make another user an admin.
-     * @deny (get) A regular user cannot check if another user is an admin.
-     * @deny (list) The list of admins is not public to prevent user enumeration.
-     * @principle Protects the authorization mechanism itself from unauthorized access
-     *   and modification, preventing privilege escalation.
      */
     match /roles_admin/{userId} {
       allow get: if isAdmin();
@@ -127,6 +109,44 @@ service cloud.firestore {
       allow create: if isAdmin();
       allow update: if isAdmin() && isExistingDoc();
       allow delete: if isAdmin() && isExistingDoc();
+    }
+
+    /**
+     * @description Controls access to the users collection.
+     *   Users can read and write their own user document.
+     */
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Controls access to the quotes collection.
+     *   Users can create quotes and read their own.
+     *   Admins can read all quotes.
+     */
+    match /quotes/{quoteId} {
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+
+    /**
+     * @description Controls access to the files subcollection.
+     *   Users can read and write their own files metadata.
+     */
+    match /users/{userId}/files/{fileId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Controls access to the orders collection.
+     *   Users can create orders and read their own orders.
+     *   Admins can read/write all orders.
+     */
+    match /orders/{orderId} {
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update, delete: if isAdmin();
     }
   }
 }

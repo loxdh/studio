@@ -9,12 +9,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { signOut, updateProfile } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { User, Package, Settings, LogOut, Loader2 } from 'lucide-react';
+import UserFiles from '@/components/account/UserFiles';
+import { User, Package, Settings, LogOut, Loader2, FileText, FolderOpen } from 'lucide-react';
 import { collection, query, where, orderBy } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
+
+
+
 
 type Order = {
     id: string;
@@ -22,6 +26,15 @@ type Order = {
     status: string;
     createdAt: any;
     items: any[];
+};
+
+type Quote = {
+    id: string;
+    createdAt: any;
+    status: string;
+    totalPrice: number;
+    displayDetails: Record<string, string>;
+    configuration: any;
 };
 
 export default function AccountPage() {
@@ -45,6 +58,18 @@ export default function AccountPage() {
     }, [firestore, user]);
 
     const { data: orders, isLoading: isOrdersLoading } = useCollection<Order>(ordersQuery);
+
+    // Fetch Quotes
+    const quotesQuery = useMemoFirebase(() => {
+        if (!firestore || !user) return null;
+        return query(
+            collection(firestore, 'quotes'),
+            where('userId', '==', user.uid),
+            orderBy('createdAt', 'desc')
+        );
+    }, [firestore, user]);
+
+    const { data: quotes, isLoading: isQuotesLoading } = useCollection<Quote>(quotesQuery);
 
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -122,6 +147,23 @@ export default function AccountPage() {
                                 <Package className="h-4 w-4" />
                                 Orders
                             </Button>
+                            <Button
+                                variant={activeTab === 'quotes' ? 'secondary' : 'ghost'}
+                                className="justify-start gap-2 w-full font-semibold"
+                                onClick={() => setActiveTab('quotes')}
+                            >
+                                <FileText className="h-4 w-4" />
+                                Saved Quotes
+                            </Button>
+                            <Button
+                                variant={activeTab === 'files' ? 'secondary' : 'ghost'}
+                                className="justify-start gap-2 w-full font-semibold"
+                                onClick={() => setActiveTab('files')}
+                            >
+                                <FolderOpen className="h-4 w-4" />
+                                Files & Guest Lists
+                            </Button>
+
                             <Button
                                 variant={activeTab === 'settings' ? 'secondary' : 'ghost'}
                                 className="justify-start gap-2 w-full font-semibold"
@@ -247,6 +289,68 @@ export default function AccountPage() {
                                 </CardContent>
                             </Card>
                         </div>
+                    )}
+
+                    {activeTab === 'quotes' && (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Saved Quotes</CardTitle>
+                                    <CardDescription>Review your saved custom design configurations.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    {isQuotesLoading ? (
+                                        <div className="text-center py-8">Loading quotes...</div>
+                                    ) : quotes && quotes.length > 0 ? (
+                                        <div className="space-y-8">
+                                            {quotes.map((quote) => (
+                                                <div key={quote.id} className="border rounded-lg p-6 space-y-4">
+                                                    <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b pb-4">
+                                                        <div>
+                                                            <p className="font-semibold">Quote Saved</p>
+                                                            <p className="text-sm text-muted-foreground">
+                                                                {quote.createdAt?.seconds ? format(new Date(quote.createdAt.seconds * 1000), 'MMMM d, yyyy') : 'Recently'}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-4">
+                                                            <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
+                                                                Saved
+                                                            </Badge>
+                                                            <p className="font-bold text-lg">${quote.totalPrice.toFixed(2)}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 text-sm">
+                                                        {quote.displayDetails && Object.entries(quote.displayDetails).map(([key, value]) => (
+                                                            <div key={key} className="flex justify-between border-b border-dashed py-1 last:border-0">
+                                                                <span className="text-muted-foreground">{key}</span>
+                                                                <span className="font-medium text-right">{value}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    <div className="pt-2 flex justify-end">
+                                                        {/* Future: Add button to load this quote back into the designer */}
+                                                        <Button variant="outline" size="sm" onClick={() => router.push('/custom-design')}>
+                                                            Start New Design
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-12">
+                                            <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                                            <h3 className="text-lg font-semibold">No saved quotes</h3>
+                                            <p className="text-muted-foreground mb-4">You haven't saved any custom designs yet.</p>
+                                            <Button onClick={() => router.push('/custom-design')}>Create Custom Design</Button>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    )}
+
+                    {activeTab === 'files' && (
+                        <UserFiles />
                     )}
 
                     {activeTab === 'settings' && (

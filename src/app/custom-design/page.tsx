@@ -17,6 +17,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
+import { useUser, useFirestore } from '@/firebase/provider';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { Save } from 'lucide-react';
 
 // --- Constants & Data ---
 
@@ -248,7 +251,6 @@ const FOLIO_EMBELLISHMENTS: Option[] = [
     { id: 'wax_standard', name: 'Standard Wax Seals', price: 1.90 },
     { id: 'wax_custom', name: 'Custom Wax Seals', price: 2.93 },
 ];
-
 const STEPS = [
     { id: 1, title: 'The Basics', description: 'Quantity & Type' },
     { id: 2, title: 'Materials', description: 'Finish & Shape' },
@@ -260,6 +262,8 @@ const STEPS = [
 export default function CustomDesignPage() {
     const { addToCart } = useCart();
     const { toast } = useToast();
+    const { user } = useUser();
+    const firestore = useFirestore();
 
     // Navigation State
     const [currentStep, setCurrentStep] = useState(1);
@@ -410,6 +414,129 @@ export default function CustomDesignPage() {
         }
     };
 
+    const handleSaveQuote = async () => {
+        if (!user) {
+            toast({
+                title: "Please Log In",
+                description: "You need to be logged in to save a quote to your account.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        try {
+            let materialDetails = '';
+            if (invitationType === 'acrylic') materialDetails = acrylicOption.name;
+            if (invitationType === 'vellum') materialDetails = vellumOption.name;
+            if (invitationType === 'paper') materialDetails = paperOption.name;
+
+            const quoteData = {
+                userId: user.uid,
+                createdAt: serverTimestamp(),
+                status: 'saved',
+                totalPrice: total,
+                configuration: {
+                    quantity,
+                    invitationType,
+                    shape: shape.id,
+                    material: {
+                        type: invitationType,
+                        details: materialDetails,
+                        optionId: invitationType === 'acrylic' ? acrylicOption.id : invitationType === 'vellum' ? vellumOption.id : paperOption.id
+                    },
+                    printColor: printColor.id,
+                    envelopes: {
+                        included: includeEnvelopes,
+                        material: envMaterial.id,
+                        color: envColor.id,
+                        embellishments: selectedEmbellishments,
+                        liner: selectedLiner,
+                        seals: selectedSeals,
+                        addressing: selectedAddressing
+                    },
+                    pockets: {
+                        included: includePockets,
+                        material: pocketMaterial.id,
+                        color: pocketColor.id,
+                        embellishments: selectedPocketEmbellishments
+                    },
+                    folios: {
+                        included: includeFolios,
+                        style: folioStyle.id,
+                        material: folioMaterial.id,
+                        color: folioColor.id,
+                        embellishments: selectedFolioEmbellishments
+                    },
+                    inserts: {
+                        printType: insertPrintType,
+                        selected: selectedInserts
+                    },
+                    services: selectedServices,
+                    notes: designNotes
+                },
+                displayDetails: {
+                    'Estimated Total': `$${total.toFixed(2)}`,
+                    'Quantity': quantity.toString(),
+                    'Type': invitationType.charAt(0).toUpperCase() + invitationType.slice(1),
+                    'Shape': shape.name,
+                    'Material': materialDetails,
+                    'Print/Foil': printColor.name,
+                    'Envelopes': includeEnvelopes ? `${envMaterial.name} (${envColor.name})` : 'None',
+                    'Pockets': includePockets ? `${pocketMaterial.name} (${pocketColor.name})` : 'None',
+                    'Folios': includeFolios ? `${folioStyle.name} - ${folioMaterial.name} (${folioColor.name})` : 'None',
+                    'Inserts': selectedInserts.length > 0
+                        ? `${selectedInserts.map(id => {
+                            const currentInsertList = insertPrintType === 'foil' ? SUITE_INSERTS_FOIL : SUITE_INSERTS_DIGITAL;
+                            return currentInsertList.find(o => o.id === id)?.name;
+                        }).filter(Boolean).join(', ')} (${insertPrintType === 'foil' ? 'Foil-Pressed' : 'Digital'})`
+                        : 'None',
+                    'Services': selectedServices.map(id => SERVICE_ADD_ONS.find(o => o.id === id)?.name).join(', '),
+                    'Notes': designNotes
+                }
+            };
+
+            const docRef = await addDoc(collection(firestore, 'quotes'), quoteData);
+
+            // Send Email Notification
+            try {
+                await fetch('/api/emails', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type: 'QUOTE_SAVED',
+                        data: {
+                            userEmail: user.email,
+                            userId: user.uid,
+                            quoteId: docRef.id,
+                            details: {
+                                invitationType,
+                                quantity,
+                                material: materialDetails,
+                                shape: shape.name,
+                                estimatedTotal: total
+                            }
+                        }
+                    })
+                });
+            } catch (emailError) {
+                console.error("Failed to send email notification:", emailError);
+            }
+
+            toast({
+                title: "Quote Saved!",
+                description: "Your design has been saved to your account.",
+            });
+
+        } catch (error) {
+            console.error("Error saving quote:", error);
+            toast({
+                title: "Error Saving Quote",
+                description: "There was a problem saving your quote. Please try again.",
+                variant: "destructive",
+            });
+        }
+    };
+
     const handleBookNow = () => {
         const depositAmount = 200;
 
@@ -458,9 +585,9 @@ export default function CustomDesignPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background pb-24">
-            {/* Hero */}
-            <section className="relative h-[25vh] w-full flex items-center justify-center bg-muted overflow-hidden">
+        <div className="min-h-screen bg-background pb-20">
+            {/* Hero Section */}
+            <section className="relative h-[40vh] min-h-[300px] flex items-center justify-center bg-muted overflow-hidden">
                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1586075010923-2dd4570fb338?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-30" />
                 <div className="relative z-10 text-center space-y-2 p-4">
                     <h1 className="font-headline text-4xl md:text-5xl flex items-center justify-center gap-3">
@@ -474,7 +601,7 @@ export default function CustomDesignPage() {
             </section>
 
             {/* Progress Bar */}
-            <div className="sticky top-16 z-40 bg-background/95 backdrop-blur border-b py-4">
+            < div className="sticky top-16 z-40 bg-background/95 backdrop-blur border-b py-4" >
                 <div className="container mx-auto px-4 max-w-4xl">
                     <div className="flex justify-between mb-2 text-xs md:text-sm font-medium text-muted-foreground">
                         {STEPS.map((step) => (
@@ -485,7 +612,7 @@ export default function CustomDesignPage() {
                     </div>
                     <Progress value={progress} className="h-2" />
                 </div>
-            </div>    <div className="container mx-auto px-4 py-8 max-w-6xl">
+            </div > <div className="container mx-auto px-4 py-8 max-w-6xl">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
 
                     {/* Main Content Area */}
@@ -1209,9 +1336,14 @@ export default function CustomDesignPage() {
                                     Next <ChevronRight className="ml-2 h-4 w-4" />
                                 </Button>
                             ) : (
-                                <Button onClick={handleBookNow} size="lg" className="w-full md:w-auto px-8 bg-primary text-primary-foreground hover:bg-primary/90">
-                                    Book Design Spot ($200)
-                                </Button>
+                                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                                    <Button onClick={handleSaveQuote} variant="outline" size="lg" className="w-full sm:w-auto">
+                                        <Save className="mr-2 h-4 w-4" /> Save Quote
+                                    </Button>
+                                    <Button onClick={handleBookNow} size="lg" className="w-full sm:w-auto px-8 bg-primary text-primary-foreground hover:bg-primary/90">
+                                        Book Design Spot ($200)
+                                    </Button>
+                                </div>
                             )}
                         </div>
                     </div>

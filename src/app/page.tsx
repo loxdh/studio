@@ -10,13 +10,17 @@ import { collection, query, orderBy, limit } from 'firebase/firestore';
 import { ArrowRight, Star, Heart, ShieldCheck } from 'lucide-react';
 import FadeIn from '@/components/ui/fade-in';
 
+import CategoryGrid from '@/components/home/CategoryGrid';
+import Testimonials from '@/components/home/Testimonials';
+
 export default function Home() {
   const firestore = useFirestore();
-  const productsCollection = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
-  const { data: products, isLoading } = useCollection<Product>(productsCollection);
+  const featuredQuery = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return query(collection(firestore, 'products'), limit(4));
+  }, [firestore]);
 
-  // In a real app, you might want to filter for "featured" products
-  const featuredProducts = products ? products.slice(0, 4) : [];
+  const { data: featuredProducts, isLoading } = useCollection<Product>(featuredQuery);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -48,6 +52,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Category Grid */}
+      <CategoryGrid />
 
       {/* Features Section */}
       <section className="py-16 bg-muted/30">
@@ -111,11 +118,14 @@ export default function Home() {
             </div>
           ) : (
             <FadeIn delay={0.2}>
-              <ProductGrid products={featuredProducts} />
+              <ProductGrid products={featuredProducts || []} />
             </FadeIn>
           )}
         </div>
       </section>
+
+      {/* Testimonials */}
+      <Testimonials />
 
       {/* CTA Section */}
       <section className="py-24 bg-primary text-primary-foreground relative overflow-hidden">

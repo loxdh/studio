@@ -1,55 +1,62 @@
-
-'use client';
+import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import ProductDetailClient from '@/components/products/ProductDetailClient';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import type { Product } from '@/lib/products';
-import { collection, query, where, limit } from 'firebase/firestore';
+import { getProductBySlug } from '@/lib/firebase-server';
 
-// This function can't be used with a client component that fetches data.
-// We will manage metadata within the client component or move to a server component structure later.
-// export async function generateMetadata({ params }: Props): Promise<Metadata> {
-// }
+type Props = {
+  params: { slug: string };
+};
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const product = await getProductBySlug(params.slug);
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
-  const firestore = useFirestore();
-
-  const productsQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'products'), where('slug', '==', slug), limit(1));
-  }, [firestore, slug]);
-
-  const { data: products, isLoading } = useCollection<Product>(productsQuery);
-  const product = products?.[0];
-
-  // Update metadata dynamically
-  if (product?.metaTitle) {
-     if (typeof document !== 'undefined') {
-      document.title = product.metaTitle;
-    }
-  }
-   if (product?.metaDescription) {
-    let metaDescElement = document.querySelector('meta[name="description"]');
-    if (!metaDescElement) {
-      metaDescElement = document.createElement('meta');
-      metaDescElement.setAttribute('name', 'description');
-      document.head.appendChild(metaDescElement);
-    }
-    metaDescElement.setAttribute('content', product.metaDescription);
+  if (!product) {
+    return {
+      title: 'Product Not Found',
+    };
   }
 
+  return {
+    title: product.metaTitle || `${product.name} | United Love Luxe`,
+    description: product.metaDescription || product.description,
+    openGraph: {
+      title: product.name,
+      description: product.description,
+      images: [product.image],
+    },
+  };
+}
 
-  if (isLoading) {
-    return <div>Loading product...</div>;
-  }
+export default async function ProductPage({ params }: Props) {
+  const product = await getProductBySlug(params.slug);
 
   if (!product) {
     notFound();
   }
 
-  return <ProductDetailClient product={product} />;
-}
+  // JSON-LD Structured Data
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    image: product.image,
+    description: product.description,
+    sku: product.id,
+    offers: {
+      '@type': 'Offer',
+      price: product.price,
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+    },
+  };
 
-    
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ProductDetailClient product={product} />
+    </>
+  );
+}
