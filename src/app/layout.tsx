@@ -5,11 +5,22 @@ import { Toaster } from '@/components/ui/toaster';
 import Navigation from '@/components/layout/Navigation';
 import Footer from '@/components/layout/Footer';
 import { CartProvider } from '@/components/cart/CartProvider';
+import { WishlistProvider } from '@/components/wishlist/WishlistProvider';
 import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'United Love Luxe',
-  description: 'Luxury stationery for the modern romantic.',
+  metadataBase: new URL('https://unitedloveluxe.com'),
+  title: {
+    default: 'United Love Luxe | Luxury Wedding Stationery',
+    template: '%s | United Love Luxe',
+  },
+  description: 'Bespoke and semi-custom wedding invitations, save the dates, and fine stationery for the modern romantic.',
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://unitedloveluxe.com',
+    siteName: 'United Love Luxe',
+  },
 };
 
 export default function RootLayout({
@@ -31,7 +42,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body antialiased">
+      <body className="font-body antialiased" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -40,12 +51,14 @@ export default function RootLayout({
         >
           <FirebaseClientProvider>
             <CartProvider>
-              <div className="flex min-h-screen flex-col">
-                <Navigation />
-                <main className="flex-grow">{children}</main>
-                <Footer />
-              </div>
-              <Toaster />
+              <WishlistProvider>
+                <div className="flex min-h-screen flex-col">
+                  <Navigation />
+                  <main className="flex-grow">{children}</main>
+                  <Footer />
+                </div>
+                <Toaster />
+              </WishlistProvider>
             </CartProvider>
           </FirebaseClientProvider>
         </ThemeProvider>
