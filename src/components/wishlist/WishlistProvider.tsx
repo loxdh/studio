@@ -1,19 +1,11 @@
 'use client';
 
-import { createContext, useState, ReactNode, useEffect } from 'react';
+import { useState, ReactNode, useEffect } from 'react';
 import type { Product } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore } from '@/firebase';
-import { doc, setDoc, getDoc, arrayUnion, arrayRemove, updateDoc } from 'firebase/firestore';
-
-export type WishlistContextType = {
-    wishlistItems: Product[];
-    addToWishlist: (product: Product) => void;
-    removeFromWishlist: (productId: string) => void;
-    isInWishlist: (productId: string) => boolean;
-};
-
-export const WishlistContext = createContext<WishlistContextType | null>(null);
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { WishlistContext } from './WishlistContext';
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
     const [wishlistItems, setWishlistItems] = useState<Product[]>([]);
