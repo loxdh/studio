@@ -18,11 +18,13 @@ export default function AdminProductsPage() {
   const { toast } = useToast();
   const [isSeeding, setIsSeeding] = useState(false);
 
+  /*
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
+  */
 
   const handleSeedProducts = async () => {
     if (!firestore) return;
@@ -68,9 +70,11 @@ export default function AdminProductsPage() {
     }
   };
 
+  /*
   if (isUserLoading || !user) {
     return <div>Loading...</div>;
   }
+  */
 
   return (
     <div>
