@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCart } from '@/hooks/useCart';
-import { Minus, Plus, Heart, ChevronDown } from 'lucide-react';
+import { Minus, Plus, Heart, ChevronRight, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -35,9 +35,10 @@ type ProductDetailClientProps = {
 export default function ProductDetailClient({
   product,
 }: ProductDetailClientProps) {
-  const productImage = PlaceHolderImages.find(
-    (img) => img.id === product.image
-  );
+  // Determine initial main image
+  const initialImage = PlaceHolderImages.find(img => img.id === product.image)?.imageUrl || product.image;
+  const [activeImage, setActiveImage] = useState(initialImage);
+
   const { addToCart } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { user } = useUser();
@@ -85,15 +86,27 @@ export default function ProductDetailClient({
   const { data: relatedProductsRaw } = useCollection<Product>(relatedProductsQuery);
   const relatedProducts = relatedProductsRaw?.filter(p => p.id !== product.id).slice(0, 4);
 
+  // Combine main image and gallery for the thumbnails list
+  const galleryImages = [initialImage, ...(product.gallery || [])];
 
   if (product.productType === 'custom') {
+    // (Keeping the custom builder logic mostly as is for now, but could apply similar layout improvements later)
     return (
       <div className="container mx-auto px-4 py-16">
+        {/* Breadcrumbs */}
+        <nav className="flex items-center text-sm text-muted-foreground mb-8">
+          <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+          <ChevronRight className="h-4 w-4 mx-2" />
+          <Link href="/shop" className="hover:text-primary transition-colors">Shop</Link>
+          <ChevronRight className="h-4 w-4 mx-2" />
+          <span className="text-foreground font-medium truncate">{product.name}</span>
+        </nav>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Image Section */}
           <div className="relative aspect-[3/4] overflow-hidden rounded-lg shadow-lg">
             <Image
-              src={productImage ? productImage.imageUrl : product.image}
+              src={activeImage}
               alt={product.name}
               fill
               className="object-cover"
@@ -179,80 +192,152 @@ export default function ProductDetailClient({
   }
 
   return (
-    <div className="container mx-auto px-4 py-16">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-24">
-        {/* Product Images */}
-        <div className="space-y-4">
-          <div className="relative aspect-[3/4] overflow-hidden rounded-lg shadow-lg group">
-            {(productImage || product.image.startsWith('http')) && (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <div className="cursor-zoom-in relative w-full h-full">
-                    <Image
-                      src={productImage ? productImage.imageUrl : product.image}
-                      alt={product.name}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      data-ai-hint={productImage?.imageHint}
-                      priority
-                    />
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
-                  </div>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl w-full h-[90vh] p-0 overflow-hidden bg-transparent border-none shadow-none">
-                  <div className="relative w-full h-full">
-                    <Image
-                      src={productImage ? productImage.imageUrl : product.image}
-                      alt={product.name}
-                      fill
-                      className="object-contain"
-                      sizes="100vw"
-                      priority
-                    />
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
-          </div>
-          {/* Gallery Thumbnails would go here if we had them */}
-          {product.gallery && product.gallery.length > 0 && (
-            <div className="grid grid-cols-4 gap-4">
-              {product.gallery.map((img, idx) => (
-                <div key={idx} className="relative aspect-square rounded-md overflow-hidden cursor-pointer border hover:border-primary">
-                  <Image src={img} alt={`Gallery ${idx}`} fill className="object-cover" />
+    <div className="container mx-auto px-4 py-8 md:py-12">
+      {/* Breadcrumbs */}
+      <nav className="flex items-center text-sm text-muted-foreground mb-8 overflow-x-auto whitespace-nowrap pb-2">
+        <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+        <ChevronRight className="h-4 w-4 mx-2" />
+        <Link href="/shop" className="hover:text-primary transition-colors">Shop</Link>
+        {product.category && (
+          <>
+            <ChevronRight className="h-4 w-4 mx-2" />
+            <span className="hover:text-primary transition-colors cursor-pointer">{product.category}</span>
+          </>
+        )}
+        <ChevronRight className="h-4 w-4 mx-2" />
+        <span className="text-foreground font-medium truncate">{product.name}</span>
+      </nav>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-24 items-start">
+        {/* Product Images - Sticky on Desktop */}
+        <div className="space-y-4 lg:sticky lg:top-24">
+          <div className="relative aspect-[3/4] overflow-hidden rounded-lg shadow-lg group bg-muted">
+            <Dialog>
+              <DialogTrigger asChild>
+                <div className="cursor-zoom-in relative w-full h-full">
+                  <Image
+                    src={activeImage}
+                    alt={product.name}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    priority
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                 </div>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl w-full h-[90vh] p-0 overflow-hidden bg-transparent border-none shadow-none">
+                <div className="relative w-full h-full">
+                  <Image
+                    src={activeImage}
+                    alt={product.name}
+                    fill
+                    className="object-contain"
+                    sizes="100vw"
+                    priority
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {/* Gallery Thumbnails */}
+          {galleryImages.length > 1 && (
+            <div className="grid grid-cols-5 gap-3">
+              {galleryImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveImage(img)}
+                  className={cn(
+                    "relative aspect-square rounded-md overflow-hidden cursor-pointer border-2 transition-all",
+                    activeImage === img ? "border-primary ring-2 ring-primary/20" : "border-transparent hover:border-muted-foreground/50"
+                  )}
+                >
+                  <Image src={img} alt={`View ${idx + 1}`} fill className="object-cover" />
+                </button>
               ))}
             </div>
           )}
         </div>
 
         {/* Product Details */}
-        <div className="flex flex-col">
-          <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-2">
-            {product.category}
-          </p>
-          <h1 className="font-headline text-4xl md:text-5xl mb-4">
-            {product.name}
-          </h1>
-          <p className="text-2xl font-semibold text-primary mb-6">
-            ${product.price.toFixed(2)}
-          </p>
+        <div className="flex flex-col space-y-8">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">
+              {product.category}
+            </p>
+            <h1 className="font-headline text-4xl md:text-5xl mb-4 leading-tight">
+              {product.name}
+            </h1>
+            <div className="flex items-baseline gap-4">
+              <p className="text-3xl font-semibold text-primary">
+                ${product.price.toFixed(2)}
+              </p>
+              {/* Placeholder for sale price if we had it */}
+              {/* <p className="text-lg text-muted-foreground line-through">$99.00</p> */}
+            </div>
+          </div>
 
-          <div className="mb-8">
+          <div className="flex items-center gap-4 py-6 border-y border-border/50">
+            <div className="flex items-center gap-2 rounded-md border p-1 bg-background">
+              <Button variant="ghost" size="icon" className="h-10 w-10" onClick={decrement}>
+                <Minus className="h-4 w-4" />
+              </Button>
+              <Input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                className="h-10 w-14 border-0 text-center shadow-none focus-visible:ring-0 text-lg"
+              />
+              <Button variant="ghost" size="icon" className="h-10 w-10" onClick={increment}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button size="lg" onClick={handleAddToCart} className="flex-1 h-12 text-lg">
+              Add to Cart
+            </Button>
+            <Button size="icon" variant="outline" className="h-12 w-12" onClick={toggleWishlist}>
+              <Heart className={cn("h-6 w-6", inWishlist && "fill-current text-red-500")} />
+            </Button>
+          </div>
+
+          {/* Trust Badges */}
+          <div className="grid grid-cols-3 gap-4 text-center text-xs text-muted-foreground">
+            <div className="flex flex-col items-center gap-2">
+              <div className="p-2 rounded-full bg-muted">
+                <Truck className="h-5 w-5 text-primary" />
+              </div>
+              <span>Fast Shipping</span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="p-2 rounded-full bg-muted">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+              </div>
+              <span>Secure Checkout</span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="p-2 rounded-full bg-muted">
+                <RefreshCw className="h-5 w-5 text-primary" />
+              </div>
+              <span>Easy Returns</span>
+            </div>
+          </div>
+
+          {/* Accordions */}
+          <div className="pt-4">
             <Accordion type="single" collapsible defaultValue="description" className="w-full">
               <AccordionItem value="description">
-                <AccordionTrigger>Description</AccordionTrigger>
+                <AccordionTrigger className="text-lg font-medium">Description</AccordionTrigger>
                 <AccordionContent>
-                  <div className="text-muted-foreground leading-relaxed">
+                  <div className="text-muted-foreground leading-relaxed text-base">
                     {product.description}
                   </div>
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="production">
-                <AccordionTrigger>Production & Shipping</AccordionTrigger>
+                <AccordionTrigger className="text-lg font-medium">Production & Shipping</AccordionTrigger>
                 <AccordionContent>
-                  <div className="text-muted-foreground space-y-2">
+                  <div className="text-muted-foreground space-y-3 leading-relaxed">
                     <p><strong>Standard Production:</strong> 5-7 business days for non-custom items. 2-3 weeks for custom stationery.</p>
                     <p><strong>Shipping:</strong> We ship worldwide via DHL Express (3-5 business days).</p>
                     <p>Rush orders are available upon request for an additional fee.</p>
@@ -260,9 +345,9 @@ export default function ProductDetailClient({
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="faq">
-                <AccordionTrigger>FAQ</AccordionTrigger>
+                <AccordionTrigger className="text-lg font-medium">FAQ</AccordionTrigger>
                 <AccordionContent>
-                  <div className="text-muted-foreground space-y-2">
+                  <div className="text-muted-foreground space-y-3 leading-relaxed">
                     <p><strong>Can I customize the colors?</strong><br />Yes! Most of our designs can be customized to match your wedding palette.</p>
                     <p><strong>Do you offer samples?</strong><br />Absolutely. We recommend ordering a sample pack to see and feel the quality of our paper and printing.</p>
                   </div>
@@ -288,29 +373,6 @@ export default function ProductDetailClient({
               ))}
             </div>
           )}
-
-          <div className="mt-8 flex items-center gap-4">
-            <div className="flex items-center gap-2 rounded-md border p-1">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={decrement}>
-                <Minus className="h-4 w-4" />
-              </Button>
-              <Input
-                type="number"
-                value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                className="h-8 w-12 border-0 text-center shadow-none focus-visible:ring-0"
-              />
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={increment}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            <Button size="lg" onClick={handleAddToCart} className="flex-1">
-              Add to Cart
-            </Button>
-            <Button size="icon" variant="outline" className="h-12 w-12" onClick={toggleWishlist}>
-              <Heart className={cn("h-6 w-6", inWishlist && "fill-current text-red-500")} />
-            </Button>
-          </div>
         </div>
       </div>
 
