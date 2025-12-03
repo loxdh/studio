@@ -50,7 +50,7 @@ export default function Testimonials() {
                     </div>
                 </FadeIn>
 
-                <div className="max-w-4xl mx-auto">
+                <div className="max-w-6xl mx-auto">
                     <Carousel
                         opts={{
                             align: "start",
@@ -60,7 +60,7 @@ export default function Testimonials() {
                     >
                         <CarouselContent>
                             {testimonials.map((testimonial) => (
-                                <CarouselItem key={testimonial.id} className="md:basis-1/2 lg:basis-1/2 pl-6">
+                                <CarouselItem key={testimonial.id} className="md:basis-1/3 lg:basis-1/3 pl-6">
                                     <div className="bg-background p-8 rounded-xl shadow-sm h-full flex flex-col">
                                         <div className="flex gap-1 mb-4 text-primary">
                                             {[1, 2, 3, 4, 5].map((star) => (
