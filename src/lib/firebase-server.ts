@@ -21,7 +21,14 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     try {
         const snapshot = await getDocs(q);
         if (!snapshot.empty) {
-            return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Product;
+            const data = snapshot.docs[0].data();
+            return {
+                id: snapshot.docs[0].id,
+                ...data,
+                // Serialize dates to plain strings/numbers to avoid "Only plain objects" error
+                createdAt: data.createdAt?.toDate?.() ? data.createdAt.toDate().toISOString() : data.createdAt,
+                updatedAt: data.updatedAt?.toDate?.() ? data.updatedAt.toDate().toISOString() : data.updatedAt,
+            } as unknown as Product;
         }
     } catch (error) {
         console.warn("Firestore fetch failed, falling back to static data:", error);
