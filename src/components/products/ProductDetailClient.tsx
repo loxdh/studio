@@ -7,15 +7,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCart } from '@/hooks/useCart';
-import { Minus, Plus, Heart } from 'lucide-react';
+import { Minus, Plus, Heart, ChevronDown } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useWishlist } from '@/hooks/useWishlist';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const ReviewForm = dynamic(() => import('./ReviewForm'), { ssr: false });
 const ReviewList = dynamic(() => import('./ReviewList'), { ssr: false });
@@ -34,8 +40,10 @@ export default function ProductDetailClient({
   );
   const { addToCart } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const { user } = useUser();
   const [quantity, setQuantity] = useState(1);
   const [customizations, setCustomizations] = useState<Record<string, string>>({});
+  const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
 
   const inWishlist = isInWishlist(product.id);
 
@@ -173,51 +181,95 @@ export default function ProductDetailClient({
   return (
     <div className="container mx-auto px-4 py-16">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-24">
-        <div className="relative aspect-[3/4] overflow-hidden rounded-lg shadow-lg group">
-          {(productImage || product.image.startsWith('http')) && (
-            <Dialog>
-              <DialogTrigger asChild>
-                <div className="cursor-zoom-in relative w-full h-full">
-                  <Image
-                    src={productImage ? productImage.imageUrl : product.image}
-                    alt={product.name}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    data-ai-hint={productImage?.imageHint}
-                    priority
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+        {/* Product Images */}
+        <div className="space-y-4">
+          <div className="relative aspect-[3/4] overflow-hidden rounded-lg shadow-lg group">
+            {(productImage || product.image.startsWith('http')) && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <div className="cursor-zoom-in relative w-full h-full">
+                    <Image
+                      src={productImage ? productImage.imageUrl : product.image}
+                      alt={product.name}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      data-ai-hint={productImage?.imageHint}
+                      priority
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl w-full h-[90vh] p-0 overflow-hidden bg-transparent border-none shadow-none">
+                  <div className="relative w-full h-full">
+                    <Image
+                      src={productImage ? productImage.imageUrl : product.image}
+                      alt={product.name}
+                      fill
+                      className="object-contain"
+                      sizes="100vw"
+                      priority
+                    />
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+          {/* Gallery Thumbnails would go here if we had them */}
+          {product.gallery && product.gallery.length > 0 && (
+            <div className="grid grid-cols-4 gap-4">
+              {product.gallery.map((img, idx) => (
+                <div key={idx} className="relative aspect-square rounded-md overflow-hidden cursor-pointer border hover:border-primary">
+                  <Image src={img} alt={`Gallery ${idx}`} fill className="object-cover" />
                 </div>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl w-full h-[90vh] p-0 overflow-hidden bg-transparent border-none shadow-none">
-                <div className="relative w-full h-full">
-                  <Image
-                    src={productImage ? productImage.imageUrl : product.image}
-                    alt={product.name}
-                    fill
-                    className="object-contain"
-                    sizes="100vw"
-                    priority
-                  />
-                </div>
-              </DialogContent>
-            </Dialog>
+              ))}
+            </div>
           )}
         </div>
-        <div className="flex flex-col justify-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-primary">
+
+        {/* Product Details */}
+        <div className="flex flex-col">
+          <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-2">
             {product.category}
           </p>
-          <h1 className="font-headline text-4xl md:text-5xl mt-2">
+          <h1 className="font-headline text-4xl md:text-5xl mb-4">
             {product.name}
           </h1>
-          <p className="mt-4 text-2xl font-semibold text-primary">
+          <p className="text-2xl font-semibold text-primary mb-6">
             ${product.price.toFixed(2)}
           </p>
-          <p className="mt-6 text-lg text-muted-foreground">
-            {product.description}
-          </p>
+
+          <div className="mb-8">
+            <Accordion type="single" collapsible defaultValue="description" className="w-full">
+              <AccordionItem value="description">
+                <AccordionTrigger>Description</AccordionTrigger>
+                <AccordionContent>
+                  <div className="text-muted-foreground leading-relaxed">
+                    {product.description}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="production">
+                <AccordionTrigger>Production & Shipping</AccordionTrigger>
+                <AccordionContent>
+                  <div className="text-muted-foreground space-y-2">
+                    <p><strong>Standard Production:</strong> 5-7 business days for non-custom items. 2-3 weeks for custom stationery.</p>
+                    <p><strong>Shipping:</strong> We ship worldwide via DHL Express (3-5 business days).</p>
+                    <p>Rush orders are available upon request for an additional fee.</p>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="faq">
+                <AccordionTrigger>FAQ</AccordionTrigger>
+                <AccordionContent>
+                  <div className="text-muted-foreground space-y-2">
+                    <p><strong>Can I customize the colors?</strong><br />Yes! Most of our designs can be customized to match your wedding palette.</p>
+                    <p><strong>Do you offer samples?</strong><br />Absolutely. We recommend ordering a sample pack to see and feel the quality of our paper and printing.</p>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
 
           <SocialShare productUrl={`/products/${product.slug}`} productName={product.name} />
 
@@ -293,14 +345,47 @@ export default function ProductDetailClient({
       )}
 
       {/* Reviews Section */}
-      <div className="max-w-3xl mx-auto space-y-12 border-t pt-16">
+      <div className="max-w-3xl mx-auto space-y-12 border-t pt-16" id="reviews">
         <div className="text-center">
           <h2 className="font-headline text-3xl mb-4">Customer Reviews</h2>
           <p className="text-muted-foreground">See what others are saying about this product.</p>
         </div>
 
         <ReviewList productId={product.id} />
-        <ReviewForm productId={product.id} />
+
+        <div className="flex justify-center">
+          {!isReviewFormOpen ? (
+            <Button onClick={() => setIsReviewFormOpen(true)} variant="outline">
+              Write a Review
+            </Button>
+          ) : (
+            <div className="w-full max-w-xl animate-in fade-in zoom-in-95 duration-300">
+              {user ? (
+                <div className="relative">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-2 z-10"
+                    onClick={() => setIsReviewFormOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <ReviewForm productId={product.id} onReviewSubmitted={() => setIsReviewFormOpen(false)} />
+                </div>
+              ) : (
+                <div className="text-center p-8 border rounded-lg bg-muted/20">
+                  <p className="mb-4 text-muted-foreground">Please log in to share your experience.</p>
+                  <Button asChild>
+                    <Link href="/login?redirect=/products/${product.slug}">Log In</Link>
+                  </Button>
+                  <Button variant="ghost" className="ml-2" onClick={() => setIsReviewFormOpen(false)}>
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
