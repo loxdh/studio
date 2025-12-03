@@ -155,7 +155,7 @@ service cloud.firestore {
      *   Reviews are publicly readable. Authenticated users can create reviews.
      */
     match /reviews/{reviewId} {
-      allow read, list: if true;
+      allow read: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (request.resource.data.userId == request.auth.uid || isAdmin());
     }
