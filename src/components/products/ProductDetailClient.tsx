@@ -302,6 +302,7 @@ export default function ProductDetailClient({
           </div>
 
           {/* Trust Badges */}
+          {/* Trust Badges */}
           <div className="grid grid-cols-3 gap-4 text-center text-xs text-muted-foreground">
             <div className="flex flex-col items-center gap-2">
               <div className="p-2 rounded-full bg-muted">
@@ -317,9 +318,9 @@ export default function ProductDetailClient({
             </div>
             <div className="flex flex-col items-center gap-2">
               <div className="p-2 rounded-full bg-muted">
-                <RefreshCw className="h-5 w-5 text-primary" />
+                <ShieldCheck className="h-5 w-5 text-primary" />
               </div>
-              <span>Easy Returns</span>
+              <span>Quality Guarantee</span>
             </div>
           </div>
 
@@ -377,34 +378,36 @@ export default function ProductDetailClient({
       </div>
 
       {/* Related Products */}
-      {relatedProducts && relatedProducts.length > 0 && (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 mb-24">
-          <h2 className="font-headline text-3xl text-center">You May Also Like</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {relatedProducts.map((related) => {
-              const relatedImage = PlaceHolderImages.find(
-                (img) => img.id === related.image
-              );
-              return (
-                <Link key={related.id} href={`/products/${related.slug}`} className="group block">
-                  <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-muted mb-3">
-                    {(relatedImage || related.image.startsWith('http')) && (
-                      <Image
-                        src={relatedImage ? relatedImage.imageUrl : related.image}
-                        alt={related.name}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    )}
-                  </div>
-                  <h3 className="font-medium truncate">{related.name}</h3>
-                  <p className="text-sm text-muted-foreground">${related.price.toFixed(2)}</p>
-                </Link>
-              )
-            })}
+      {
+        relatedProducts && relatedProducts.length > 0 && (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 mb-24">
+            <h2 className="font-headline text-3xl text-center">You May Also Like</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {relatedProducts.map((related) => {
+                const relatedImage = PlaceHolderImages.find(
+                  (img) => img.id === related.image
+                );
+                return (
+                  <Link key={related.id} href={`/products/${related.slug}`} className="group block">
+                    <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-muted mb-3">
+                      {(relatedImage || related.image.startsWith('http')) && (
+                        <Image
+                          src={relatedImage ? relatedImage.imageUrl : related.image}
+                          alt={related.name}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      )}
+                    </div>
+                    <h3 className="font-medium truncate">{related.name}</h3>
+                    <p className="text-sm text-muted-foreground">${related.price.toFixed(2)}</p>
+                  </Link>
+                )
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Reviews Section */}
       <div className="max-w-3xl mx-auto space-y-12 border-t pt-16" id="reviews">
@@ -449,6 +452,6 @@ export default function ProductDetailClient({
           )}
         </div>
       </div>
-    </div>
+    </div >
   );
 }

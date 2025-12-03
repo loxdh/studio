@@ -27,9 +27,9 @@ export default function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 border-r bg-background p-4">
-      <div className="flex items-center space-x-2 pb-6 border-b mb-6">
-        <BookHeart className="h-8 w-8 text-primary" />
+    <aside className="w-64 border-r border-sidebar-border bg-sidebar p-4 text-sidebar-foreground">
+      <div className="flex items-center space-x-2 pb-6 border-b border-sidebar-border mb-6">
+        <BookHeart className="h-8 w-8 text-sidebar-primary" />
         <span className="font-headline text-xl font-bold">Admin Panel</span>
       </div>
       <nav className="flex flex-col gap-2">
@@ -40,8 +40,8 @@ export default function AdminSidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-foreground transition-all hover:bg-accent hover:text-accent-foreground',
-                isActive && 'bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground'
+                'flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                isActive ? 'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground' : 'text-sidebar-foreground'
               )}
             >
               <item.icon className="h-4 w-4" />
