@@ -13,6 +13,8 @@ export default function AdminLayout({
   const { user, isUserLoading } = useUser();
   const router = useRouter();
 
+  // Authentication check temporarily disabled for Firebase Studio usage
+  /*
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
@@ -26,6 +28,7 @@ export default function AdminLayout({
       </div>
     )
   }
+  */
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)]">
