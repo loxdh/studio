@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCart } from '@/hooks/useCart';
-import { Minus, Plus, Heart, ChevronRight, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
+import { Minus, Plus, Heart, ChevronRight, ChevronLeft, ShieldCheck, Truck, Edit } from 'lucide-react';
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -32,6 +32,8 @@ type ProductDetailClientProps = {
   product: Product;
 };
 
+import { QUANTITY_OPTIONS } from '@/lib/pricing-data';
+
 export default function ProductDetailClient({
   product,
 }: ProductDetailClientProps) {
@@ -42,7 +44,7 @@ export default function ProductDetailClient({
   const { addToCart } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
   const { user } = useUser();
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(25);
   const [customizations, setCustomizations] = useState<Record<string, string>>({});
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
 
@@ -60,8 +62,7 @@ export default function ProductDetailClient({
     }
   };
 
-  const increment = () => setQuantity(q => q + 1);
-  const decrement = () => setQuantity(q => Math.max(1, q - 1));
+  // Quantity helpers removed in favor of dropdown
 
   const handleCustomizationChange = (key: string, value: string) => {
     setCustomizations(prev => ({ ...prev, [key]: value }));
@@ -164,19 +165,22 @@ export default function ProductDetailClient({
             </div>
 
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 rounded-md border p-1">
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={decrement}>
-                  <Minus className="h-4 w-4" />
-                </Button>
-                <Input
-                  type="number"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="h-8 w-12 border-0 text-center shadow-none focus-visible:ring-0"
-                />
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={increment}>
-                  <Plus className="h-4 w-4" />
-                </Button>
+              <div className="w-[140px]">
+                <Select
+                  value={quantity.toString()}
+                  onValueChange={(val) => setQuantity(parseInt(val))}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Qty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {QUANTITY_OPTIONS.map((num) => (
+                      <SelectItem key={num} value={num.toString()}>
+                        Set of {num}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <Button size="lg" onClick={handleAddToCart} className="flex-1" disabled={!paperType || !printMethod}>
                 Add to Quote / Cart
@@ -194,7 +198,10 @@ export default function ProductDetailClient({
   return (
     <div className="container mx-auto px-4 py-8 md:py-12">
       {/* Breadcrumbs */}
-      <nav className="flex items-center text-sm text-muted-foreground mb-8 overflow-x-auto whitespace-nowrap pb-2">
+
+
+      {/* Breadcrumbs */}
+      <nav className="flex items-center text-sm text-muted-foreground mb-12 overflow-x-auto whitespace-nowrap pb-2">
         <Link href="/" className="hover:text-primary transition-colors">Home</Link>
         <ChevronRight className="h-4 w-4 mx-2" />
         <Link href="/shop" className="hover:text-primary transition-colors">Shop</Link>
@@ -210,8 +217,58 @@ export default function ProductDetailClient({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-24 items-start">
         {/* Product Images - Sticky on Desktop */}
-        <div className="space-y-4 lg:sticky lg:top-24">
-          <div className="relative aspect-[3/4] overflow-hidden rounded-lg shadow-lg group bg-muted">
+        {/* Product Images - Sticky on Desktop */}
+        <div className="lg:sticky lg:top-24 flex flex-col-reverse lg:flex-row gap-4">
+          {/* Gallery Thumbnails - Left on Desktop, Bottom on Mobile */}
+          {galleryImages.length > 1 && (
+            <div className="flex lg:flex-col gap-3 overflow-x-auto lg:overflow-y-auto lg:max-h-[600px] scrollbar-hide">
+              {galleryImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveImage(img)}
+                  className={cn(
+                    "relative w-20 h-20 lg:w-24 lg:h-24 shrink-0 rounded-md overflow-hidden cursor-pointer border-2 transition-all",
+                    activeImage === img ? "border-primary ring-2 ring-primary/20" : "border-transparent hover:border-muted-foreground/50"
+                  )}
+                >
+                  <Image src={img} alt={`View ${idx + 1}`} fill className="object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Main Image */}
+          <div className="flex-1 relative aspect-[3/4] overflow-hidden rounded-lg shadow-sm group bg-muted">
+            {/* Image Carousel Arrows */}
+            {galleryImages.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const currentIndex = galleryImages.indexOf(activeImage);
+                    const prevIndex = (currentIndex - 1 + galleryImages.length) % galleryImages.length;
+                    setActiveImage(galleryImages[prevIndex]);
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/80 text-black shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const currentIndex = galleryImages.indexOf(activeImage);
+                    const nextIndex = (currentIndex + 1) % galleryImages.length;
+                    setActiveImage(galleryImages[nextIndex]);
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-2 rounded-full bg-white/80 text-black shadow-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </>
+            )}
+
             <Dialog>
               <DialogTrigger asChild>
                 <div className="cursor-zoom-in relative w-full h-full">
@@ -240,29 +297,12 @@ export default function ProductDetailClient({
               </DialogContent>
             </Dialog>
           </div>
-
-          {/* Gallery Thumbnails */}
-          {galleryImages.length > 1 && (
-            <div className="grid grid-cols-5 gap-3">
-              {galleryImages.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveImage(img)}
-                  className={cn(
-                    "relative aspect-square rounded-md overflow-hidden cursor-pointer border-2 transition-all",
-                    activeImage === img ? "border-primary ring-2 ring-primary/20" : "border-transparent hover:border-muted-foreground/50"
-                  )}
-                >
-                  <Image src={img} alt={`View ${idx + 1}`} fill className="object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Product Details */}
         <div className="flex flex-col space-y-8">
           <div>
+
             <p className="text-sm font-semibold uppercase tracking-widest text-primary mb-3">
               {product.category}
             </p>
@@ -271,27 +311,39 @@ export default function ProductDetailClient({
             </h1>
             <div className="flex items-baseline gap-4">
               <p className="text-3xl font-semibold text-primary">
-                ${product.price.toFixed(2)}
+                ${(product.price * quantity).toFixed(2)}
               </p>
-              {/* Placeholder for sale price if we had it */}
-              {/* <p className="text-lg text-muted-foreground line-through">$99.00</p> */}
+              <span className="text-sm text-muted-foreground">
+                (${product.price.toFixed(2)} each)
+              </span>
+              {user && (
+                <Button variant="outline" size="sm" asChild className="ml-auto">
+                  <Link href={`/admin/products/edit/${product.id}`}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Product
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
 
           <div className="flex items-center gap-4 py-6 border-y border-border/50">
-            <div className="flex items-center gap-2 rounded-md border p-1 bg-background">
-              <Button variant="ghost" size="icon" className="h-10 w-10" onClick={decrement}>
-                <Minus className="h-4 w-4" />
-              </Button>
-              <Input
-                type="number"
-                value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                className="h-10 w-14 border-0 text-center shadow-none focus-visible:ring-0 text-lg"
-              />
-              <Button variant="ghost" size="icon" className="h-10 w-10" onClick={increment}>
-                <Plus className="h-4 w-4" />
-              </Button>
+            <div className="w-[180px]">
+              <Select
+                value={quantity.toString()}
+                onValueChange={(val) => setQuantity(parseInt(val))}
+              >
+                <SelectTrigger className="h-12">
+                  <SelectValue placeholder="Select Quantity" />
+                </SelectTrigger>
+                <SelectContent>
+                  {QUANTITY_OPTIONS.map((num) => (
+                    <SelectItem key={num} value={num.toString()}>
+                      Set of {num}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <Button size="lg" onClick={handleAddToCart} className="flex-1 h-12 text-lg">
               Add to Cart
@@ -301,7 +353,6 @@ export default function ProductDetailClient({
             </Button>
           </div>
 
-          {/* Trust Badges */}
           {/* Trust Badges */}
           <div className="grid grid-cols-3 gap-4 text-center text-xs text-muted-foreground">
             <div className="flex flex-col items-center gap-2">
@@ -330,7 +381,7 @@ export default function ProductDetailClient({
               <AccordionItem value="description">
                 <AccordionTrigger className="text-lg font-medium">Description</AccordionTrigger>
                 <AccordionContent>
-                  <div className="text-muted-foreground leading-relaxed text-base">
+                  <div className="text-muted-foreground leading-relaxed text-base whitespace-pre-wrap">
                     {product.description}
                   </div>
                 </AccordionContent>

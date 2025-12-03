@@ -36,42 +36,67 @@ const ProductCard = ({ product }: ProductCardProps) => {
     }
   };
 
+  const secondaryImage = product.gallery && product.gallery.length > 0 ? product.gallery[0] : null;
+
   return (
     <Link href={`/products/${product.slug}`} className="block relative group">
-      <Card className="overflow-hidden rounded-lg border-2 border-transparent transition-all hover:border-primary hover:shadow-xl">
+      <Card className="overflow-hidden rounded-lg border-none shadow-sm transition-all duration-300 hover:shadow-lg">
         <CardHeader className="p-0">
-          <div className="relative h-96 w-full">
+          <div className="relative h-[400px] w-full bg-muted overflow-hidden">
+            {/* Main Image */}
             {(productImage || product.image.startsWith('http')) && (
               <Image
                 src={productImage ? productImage.imageUrl : product.image}
                 alt={product.name}
                 fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                className={cn(
+                  "object-cover transition-all duration-500",
+                  secondaryImage ? "group-hover:opacity-0" : "group-hover:scale-105"
+                )}
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 data-ai-hint={productImage?.imageHint}
               />
             )}
+
+            {/* Secondary Image (on Hover) */}
+            {secondaryImage && (
+              <Image
+                src={secondaryImage}
+                alt={`${product.name} - Alternate View`}
+                fill
+                className="object-cover absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500 group-hover:scale-105"
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+              />
+            )}
+
+            {/* Wishlist Button */}
             <Button
               size="icon"
               variant="secondary"
               className={cn(
-                "absolute top-2 right-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity",
-                inWishlist && "opacity-100 text-red-500 bg-white/90 hover:bg-white"
+                "absolute top-3 right-3 h-8 w-8 rounded-full opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 z-10",
+                inWishlist && "opacity-100 translate-y-0 text-red-500 bg-white/90 hover:bg-white"
               )}
               onClick={toggleWishlist}
             >
-              <Heart className={cn("h-5 w-5", inWishlist && "fill-current")} />
+              <Heart className={cn("h-4 w-4", inWishlist && "fill-current")} />
             </Button>
+
+            {/* Quick Add Overlay */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black/60 to-transparent">
+              <Button className="w-full bg-white text-black hover:bg-white/90 font-medium shadow-lg">
+                View Details
+              </Button>
+            </div>
           </div>
         </CardHeader>
-        <CardContent className="p-4">
-          <h3 className="truncate font-headline text-lg">{product.name}</h3>
-        </CardContent>
-        <CardFooter className="p-4 pt-0">
-          <p className="text-base font-semibold text-primary">
+        <CardContent className="p-5 text-center">
+          <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2">{product.category}</p>
+          <h3 className="truncate font-headline text-lg mb-1 group-hover:text-primary transition-colors">{product.name}</h3>
+          <p className="text-base font-medium text-primary">
             ${product.price.toFixed(2)}
           </p>
-        </CardFooter>
+        </CardContent>
       </Card>
     </Link>
   );

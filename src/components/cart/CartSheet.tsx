@@ -12,8 +12,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Input } from '../ui/input';
-import { X } from 'lucide-react';
+import { X, ShoppingBag, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { QUANTITY_OPTIONS } from '@/lib/pricing-data';
 
 export default function CartSheet() {
   const { cartItems, cartTotal, updateQuantity, removeFromCart } = useCart();
@@ -27,92 +30,139 @@ export default function CartSheet() {
       {cartItems.length > 0 ? (
         <>
           <ScrollArea className="flex-1">
-            <div className="flex flex-col gap-6 px-6 py-4">
+            <div className="flex flex-col gap-8 px-6 py-6">
               {cartItems.map((item, index) => {
                 const productImage = PlaceHolderImages.find(
                   (img) => img.id === item.product.image
                 );
                 return (
-                  <div key={`${item.product.id}-${index}`} className="flex items-start gap-4">
-                    <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-md">
+                  <div key={`${item.product.id}-${index}`} className="flex gap-4 group">
+                    <div className="relative h-28 w-24 flex-shrink-0 overflow-hidden rounded-md border bg-muted">
                       {(productImage || item.product.image.startsWith('http')) && (
                         <Image
                           src={productImage ? productImage.imageUrl : item.product.image}
                           alt={item.product.name}
                           fill
-                          className="object-cover"
+                          className="object-cover transition-transform group-hover:scale-105"
                           sizes="96px"
                           data-ai-hint={productImage?.imageHint}
                         />
                       )}
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-headline text-lg">
-                        {item.product.name}
-                      </h4>
-                      <p className="text-sm text-primary">
-                        ${item.product.price.toFixed(2)}
-                      </p>
-
-                      {/* Display Customizations */}
-                      {item.customizations && Object.keys(item.customizations).length > 0 && (
-                        <div className="mt-2 text-xs text-muted-foreground space-y-1 bg-muted/50 p-2 rounded">
-                          {Object.entries(item.customizations).map(([key, value]) => (
-                            <div key={key} className="flex gap-1">
-                              <span className="font-semibold">{key}:</span>
-                              <span>{value}</span>
-                            </div>
-                          ))}
+                    <div className="flex flex-1 flex-col justify-between">
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-start">
+                          <h4 className="font-headline text-lg leading-tight pr-4">
+                            {item.product.name}
+                          </h4>
+                          <button
+                            onClick={() => removeFromCart(item.product.id, item.customizations)}
+                            className="text-muted-foreground hover:text-destructive transition-colors p-1 -mr-2"
+                          >
+                            <X className="h-4 w-4" />
+                            <span className="sr-only">Remove</span>
+                          </button>
                         </div>
-                      )}
+                        <p className="text-sm text-muted-foreground">
+                          ${item.product.price.toFixed(2)} each
+                        </p>
 
-                      <div className="mt-2 flex items-center gap-2">
-                        <Input
-                          type="number"
-                          min="1"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            updateQuantity(
-                              item.product.id,
-                              parseInt(e.target.value),
-                              item.customizations
-                            )
-                          }
-                          className="h-8 w-16"
-                        />
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => removeFromCart(item.product.id, item.customizations)}>
-                          <X className="h-4 w-4" />
-                          <span className="sr-only">Remove item</span>
-                        </Button>
+                        {/* Display Customizations */}
+                        {item.customizations && Object.keys(item.customizations).length > 0 && (
+                          <div className="text-xs text-muted-foreground space-y-1 mt-2 border-l-2 border-muted pl-2">
+                            {Object.entries(item.customizations).map(([key, value]) => (
+                              <div key={key} className="flex gap-1">
+                                <span className="font-medium opacity-70">{key}:</span>
+                                <span>{value}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between mt-4">
+                        <div className="w-[140px]">
+                          <Select
+                            value={item.quantity.toString()}
+                            onValueChange={(val) => updateQuantity(item.product.id, parseInt(val), item.customizations)}
+                          >
+                            <SelectTrigger className="h-9">
+                              <SelectValue placeholder="Qty" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {QUANTITY_OPTIONS.map((num) => (
+                                <SelectItem key={num} value={num.toString()}>
+                                  Set of {num}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <p className="font-semibold text-primary">
+                          ${(item.product.price * item.quantity).toFixed(2)}
+                        </p>
                       </div>
                     </div>
-                    <p className="font-semibold">
-                      ${(item.product.price * item.quantity).toFixed(2)}
-                    </p>
                   </div>
                 );
               })}
             </div>
           </ScrollArea>
           <Separator />
-          <SheetFooter className="px-6 py-4">
+          <SheetFooter className="px-6 py-6 bg-muted/10">
             <div className="w-full space-y-4">
-              <div className="flex justify-between text-lg font-semibold">
-                <span>Subtotal</span>
-                <span>${cartTotal.toFixed(2)}</span>
+              {/* Free Shipping Progress */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Free Shipping ($500.00)</span>
+                  <span>{Math.min(100, (cartTotal / 500) * 100).toFixed(0)}%</span>
+                </div>
+                <Progress value={Math.min(100, (cartTotal / 500) * 100)} className="h-1" />
+                {cartTotal < 500 && (
+                  <p className="text-xs text-center text-muted-foreground">
+                    Add <span className="font-medium text-foreground">${(500 - cartTotal).toFixed(2)}</span> more to unlock free shipping
+                  </p>
+                )}
+                {cartTotal >= 500 && (
+                  <p className="text-xs text-center text-green-600 font-medium flex items-center justify-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-600" />
+                    You've unlocked free shipping!
+                  </p>
+                )}
               </div>
-              <Button className="w-full" size="lg" asChild>
-                <Link href="/checkout">Proceed to Checkout</Link>
+
+              <div className="space-y-2 pt-2">
+                <div className="flex justify-between text-base">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="font-semibold">${cartTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Shipping</span>
+                  <span>Calculated at checkout</span>
+                </div>
+              </div>
+
+              <Button className="w-full h-12 text-base rounded-full shadow-md hover:shadow-lg transition-all" size="lg" asChild>
+                <Link href="/checkout" className="flex items-center justify-center gap-2">
+                  Proceed to Checkout <ArrowRight className="h-4 w-4" />
+                </Link>
               </Button>
             </div>
           </SheetFooter>
         </>
       ) : (
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-          <h3 className='font-headline text-2xl'>Your cart is empty</h3>
-          <p className='text-muted-foreground'>Add some beautiful stationery to get started.</p>
-          <Button asChild>
-            <Link href="/products">Continue Shopping</Link>
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center p-8">
+          <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center">
+            <ShoppingBag className="h-10 w-10 text-muted-foreground" />
+          </div>
+          <div className="space-y-2">
+            <h3 className='font-headline text-2xl'>Your cart is empty</h3>
+            <p className='text-muted-foreground max-w-xs mx-auto'>
+              Looks like you haven't added anything to your cart yet.
+            </p>
+          </div>
+          <Button asChild size="lg" className="rounded-full px-8">
+            <Link href="/products">Start Shopping</Link>
           </Button>
         </div>
       )}

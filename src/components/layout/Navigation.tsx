@@ -98,12 +98,7 @@ const Navigation = () => {
       )}
     >
       <div className="container flex h-16 items-center">
-        <Link href="/" className="mr-6 flex items-center space-x-2">
-          <BookHeart className="h-6 w-6 text-primary" />
-          <span className="hidden font-bold sm:inline-block font-headline text-lg">
-            United Love Luxe
-          </span>
-        </Link>
+
 
         {/* Desktop Nav */}
         <div className="mr-4 hidden lg:flex">

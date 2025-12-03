@@ -10,12 +10,12 @@ import {
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from '@/firebase';
 import type { Product } from '@/lib/products';
-import { collection } from 'firebase/firestore';
+import { collection, doc } from 'firebase/firestore';
 import { Button } from '../ui/button';
 import Link from 'next/link';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Edit, Trash2 } from 'lucide-react';
 
 export default function ProductManager() {
   const firestore = useFirestore();
@@ -80,7 +80,29 @@ export default function ProductManager() {
                   ${product.price.toFixed(2)}
                 </TableCell>
                 <TableCell>
-                  {/* Actions would go here, e.g., Edit, Delete */}
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" asChild>
+                      <Link href={`/admin/products/edit/${product.id}`}>
+                        <Edit className="h-4 w-4" />
+                        <span className="sr-only">Edit</span>
+                      </Link>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive/90"
+                      onClick={() => {
+                        if (confirm('Are you sure you want to delete this product?')) {
+                          if (firestore) {
+                            deleteDocumentNonBlocking(doc(firestore, 'products', product.id));
+                          }
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete</span>
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             );

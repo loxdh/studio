@@ -161,7 +161,7 @@ export default function ImageSelector({ selectedImageId, galleryImages = [], onI
                     type="file"
                     ref={fileInputRef}
                     className="hidden"
-                    accept="image/*"
+                    accept="image/*,video/*"
                     multiple
                     onChange={handleFileUpload}
                 />
@@ -169,51 +169,66 @@ export default function ImageSelector({ selectedImageId, galleryImages = [], onI
 
             {allImages.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    {allImages.map((url, index) => (
-                        <div key={index} className={cn(
-                            "relative aspect-square rounded-md overflow-hidden border-2 group",
-                            url === selectedImageId ? "border-primary ring-2 ring-primary" : "border-border"
-                        )}>
-                            <Image
-                                src={url}
-                                alt={`Product image ${index + 1}`}
-                                fill
-                                className="object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                <Button
-                                    size="icon"
-                                    variant={url === selectedImageId ? "default" : "secondary"}
-                                    className="h-8 w-8"
-                                    onClick={() => setMainImage(url)}
-                                    title="Set as Main Image"
-                                    type="button"
-                                >
-                                    <Star className={cn("h-4 w-4", url === selectedImageId && "fill-current")} />
-                                </Button>
-                                <Button
-                                    size="icon"
-                                    variant="destructive"
-                                    className="h-8 w-8"
-                                    onClick={() => removeImage(url)}
-                                    title="Remove Image"
-                                    type="button"
-                                >
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            </div>
-                            {url === selectedImageId && (
-                                <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
-                                    Main
+                    {allImages.map((url, index) => {
+                        const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/) || url.includes('video');
+                        return (
+                            <div key={index} className={cn(
+                                "relative aspect-square rounded-md overflow-hidden border-2 group bg-black/5",
+                                url === selectedImageId ? "border-primary ring-2 ring-primary" : "border-border"
+                            )}>
+                                {isVideo ? (
+                                    <video
+                                        src={url}
+                                        className="object-cover w-full h-full"
+                                        muted
+                                        playsInline
+                                        loop
+                                        onMouseOver={e => e.currentTarget.play()}
+                                        onMouseOut={e => e.currentTarget.pause()}
+                                    />
+                                ) : (
+                                    <Image
+                                        src={url}
+                                        alt={`Product image ${index + 1}`}
+                                        fill
+                                        className="object-cover"
+                                    />
+                                )}
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                    <Button
+                                        size="icon"
+                                        variant={url === selectedImageId ? "default" : "secondary"}
+                                        className="h-8 w-8"
+                                        onClick={() => setMainImage(url)}
+                                        title="Set as Main Image"
+                                        type="button"
+                                    >
+                                        <Star className={cn("h-4 w-4", url === selectedImageId && "fill-current")} />
+                                    </Button>
+                                    <Button
+                                        size="icon"
+                                        variant="destructive"
+                                        className="h-8 w-8"
+                                        onClick={() => removeImage(url)}
+                                        title="Remove Image"
+                                        type="button"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
                                 </div>
-                            )}
-                        </div>
-                    ))}
+                                {url === selectedImageId && (
+                                    <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+                                        Main
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             )}
 
             <p className="text-xs text-muted-foreground mt-2">
-                Upload up to 10 photos. The "Main" image will be shown on the shop front.
+                Upload up to 10 photos or videos. The "Main" image will be shown on the shop front.
             </p>
         </div>
     );

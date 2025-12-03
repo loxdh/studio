@@ -23,234 +23,19 @@ import { Save } from 'lucide-react';
 
 // --- Constants & Data ---
 
-const QUANTITY_TIERS = [25, 50, 75, 100, 125, 150, 175, 200, 250, 300];
+import {
+    SHAPES, ACRYLIC_OPTIONS, VELLUM_OPTIONS, PAPER_OPTIONS, PRINT_COLORS,
+    SUITE_INSERTS_FOIL, SUITE_INSERTS_DIGITAL, SERVICE_ADD_ONS,
+    ENVELOPE_MATERIALS, ENVELOPE_COLORS, ENVELOPE_EMBELLISHMENTS, ENVELOPE_LINERS, ENVELOPE_SEALS, ENVELOPE_ADDRESSING,
+    POCKET_MATERIALS, POCKET_COLORS, POCKET_EMBELLISHMENTS,
+    FOLIO_STYLES, FOLIO_MATERIALS, FOLIO_EMBELLISHMENTS,
+    calculateItemPrice, PricingOption
+} from '@/lib/pricing-data';
+
+const QUANTITY_TIERS = [25, 35, 50, 60, 70, 80, 90, 100, 125, 150, 175, 200, 250, 300];
 
 type InvitationType = 'acrylic' | 'vellum' | 'paper';
 
-interface Option {
-    id: string;
-    name: string;
-    price: number; // Price per unit
-    description?: string;
-    type?: 'flat' | 'per_unit';
-}
-
-interface ServiceOption {
-    id: string;
-    name: string;
-    price: number;
-    type: 'flat' | 'per_unit';
-}
-
-const INVITATION_TYPES: { id: InvitationType; name: string; description: string }[] = [
-    { id: 'acrylic', name: 'Acrylic', description: 'Modern, sleek, and rigid. The ultimate statement.' },
-    { id: 'vellum', name: 'Vellum', description: 'Soft, translucent, and romantic. Ethereal beauty.' },
-    { id: 'paper', name: 'Premium Paper', description: 'Classic luxury. Thick, textured, and timeless.' },
-];
-
-const SHAPES: Option[] = [
-    { id: 'rectangle', name: 'Rectangle', price: 0.00 },
-    { id: 'square', name: 'Square', price: 0.00 },
-    { id: 'tall', name: 'Tall', price: 1.25 },
-    { id: 'hexagon', name: 'Hexagon', price: 0.75 },
-    { id: 'rounded', name: 'Rounded', price: 1.00 },
-    { id: 'arch', name: 'Arch', price: 1.00 },
-    { id: 'circle', name: 'Circle', price: 1.00 },
-    { id: 'custom', name: 'Custom Shape', price: 175.00, type: 'flat' },
-];
-
-const ACRYLIC_OPTIONS: Option[] = [
-    { id: '0.5mm', name: '0.5mm - Basic Acrylics', price: 1.35 },
-    { id: '0.75mm', name: '0.75mm - Premium Acrylics', price: 1.65 },
-    { id: '1mm', name: '1mm - Deluxe Acrylics', price: 1.90 },
-    { id: '2mm', name: '2mm - Exquisite Acrylics', price: 2.50 },
-];
-
-const VELLUM_OPTIONS: Option[] = [
-    { id: 'only_vellum', name: 'Only Vellum', price: 1.25 },
-    { id: 'vellum_matte', name: 'Vellum + Matte Paper', price: 2.95 },
-    { id: 'vellum_shimmer', name: 'Vellum + Shimmery Paper', price: 3.15 },
-    { id: 'vellum_double_matte', name: 'Vellum + Double Thick Matte', price: 4.25 },
-    { id: 'vellum_double_shimmer', name: 'Vellum + Double Thick Shimmer', price: 4.75 },
-];
-
-const PAPER_OPTIONS: Option[] = [
-    { id: 'premium_matte', name: 'Premium Matte Paper', price: 1.35 },
-    { id: 'premium_shimmer', name: 'Premium Shimmery Paper', price: 1.45 },
-    { id: 'double_matte', name: 'Double Thick Matte Paper', price: 1.65 },
-    { id: 'double_shimmer', name: 'Double Thick Shimmery Paper', price: 1.85 },
-    { id: 'extra_thick', name: 'Extra Thick Block Paper', price: 2.35 },
-    { id: 'velvet', name: 'Velvet', price: 2.30 },
-];
-
-const PRINT_COLORS: (Option & { bgClass: string, textClass?: string })[] = [
-    { id: 'gold', name: 'Gold Foil', price: 4.85, bgClass: 'bg-gradient-to-br from-[#BF953F] via-[#FCF6BA] to-[#B38728]' },
-    { id: 'rose_gold', name: 'Rose Gold Foil', price: 4.85, bgClass: 'bg-gradient-to-br from-[#E6C2B6] via-[#F0D6CE] to-[#C9988C]' },
-    { id: 'silver', name: 'Silver Foil', price: 4.85, bgClass: 'bg-gradient-to-br from-[#C0C0C0] via-[#E8E8E8] to-[#A0A0A0]' },
-    { id: 'copper', name: 'Copper Foil', price: 4.85, bgClass: 'bg-gradient-to-br from-[#B87333] via-[#E6A67C] to-[#8B4513]' },
-    { id: 'white', name: 'White Foil', price: 4.85, bgClass: 'bg-gradient-to-br from-[#F5F5F5] via-[#FFFFFF] to-[#E0E0E0] border border-gray-100' },
-    { id: 'black', name: 'Black Foil', price: 4.85, bgClass: 'bg-gradient-to-br from-[#2b2b2b] via-[#4a4a4a] to-[#000000]' },
-    { id: 'other', name: 'Other Foil Color', price: 5.85, bgClass: 'bg-gradient-to-r from-indigo-200 via-purple-200 to-pink-200' },
-    { id: 'uv', name: 'UV Print', price: 1.30, bgClass: 'bg-[url("https://www.transparenttextures.com/patterns/diagmonds-light.png")] bg-pink-100', textClass: 'text-black' },
-    { id: 'deboss', name: 'Letterpress / Deboss', price: 3.85, bgClass: 'bg-gray-200 shadow-inner' },
-    { id: 'emboss', name: 'Emboss', price: 3.85, bgClass: 'bg-gray-100 shadow-lg' },
-];
-
-// Inserts with Foil-Pressed Pricing
-const SUITE_INSERTS_FOIL: Option[] = [
-    { id: 'rsvp', name: 'Foil-Pressed RSVP Cards', price: 106.25, description: 'Response cards for your guests.' },
-    { id: 'rsvp_envelopes', name: 'Premium RSVP Envelopes', price: 88.75, description: 'Matching envelopes for RSVP cards.' },
-    { id: 'thank_you', name: 'Foil-Pressed Thank You Cards', price: 108.75, description: 'Express your gratitude in style.' },
-    { id: 'details', name: 'Foil-Pressed Details Cards', price: 106.25, description: 'Event specifics and timelines.' },
-    { id: 'direction', name: 'Foil-Pressed Direction Cards', price: 106.25, description: 'Maps and directions to venue.' },
-    { id: 'accommodation', name: 'Foil-Pressed Accommodation Cards', price: 106.25, description: 'Hotel and lodging information.' },
-    { id: 'reception', name: 'Foil-Pressed Reception Cards', price: 106.25, description: 'Details for the reception party.' },
-    { id: 'belly_bands', name: 'Foil-Pressed Belly Bands', price: 82.50, description: 'Wrap your suite together elegantly.' },
-];
-
-// Inserts with Digital Printing Pricing
-const SUITE_INSERTS_DIGITAL: Option[] = [
-    { id: 'rsvp', name: 'RSVP Cards', price: 37.00, description: 'Response cards for your guests.' },
-    { id: 'rsvp_envelopes', name: 'Premium RSVP Envelopes', price: 38.25, description: 'Matching envelopes for RSVP cards.' },
-    { id: 'thank_you', name: 'Foldable Thank You Cards', price: 38.25, description: 'Express your gratitude in style.' },
-    { id: 'details', name: 'Details Cards', price: 35.75, description: 'Event specifics and timelines.' },
-    { id: 'direction', name: 'Direction Cards', price: 35.75, description: 'Maps and directions to venue.' },
-    { id: 'accommodation', name: 'Accommodation Cards', price: 35.75, description: 'Hotel and lodging information.' },
-    { id: 'reception', name: 'Reception Cards', price: 35.75, description: 'Details for the reception party.' },
-    { id: 'belly_bands', name: 'Belly Bands', price: 32.00, description: 'Wrap your suite together elegantly.' },
-];
-
-const SERVICE_ADD_ONS: ServiceOption[] = [
-    { id: 'assembly', name: 'Assembly', price: 39.13, type: 'per_unit' },
-    { id: 'rush', name: 'Rush Order', price: 92.50, type: 'flat' },
-    { id: 'minor_custom', name: 'Minor Customization', price: 45.80, type: 'flat' },
-    { id: 'scratch_design', name: 'Design From Scratch', price: 89.00, type: 'flat' },
-    { id: 'custom_sketch', name: 'Custom Sketch', price: 245.00, type: 'flat' },
-    { id: 'mailing', name: 'Mailing Service', price: 256.00, type: 'flat' },
-];
-
-// --- New Envelope Data ---
-
-const ENVELOPE_MATERIALS: Option[] = [
-    { id: 'basic_white', name: 'Basic White Mailing Envelope', price: 2.10 },
-    { id: 'vellum', name: 'Vellum', price: 2.20 },
-    { id: 'matte', name: 'Premium Matte Paper', price: 2.29 },
-    { id: 'shimmer', name: 'Premium Shimmery Paper', price: 2.35 },
-    { id: 'velvet', name: 'Velvet', price: 3.10 },
-];
-
-const ENVELOPE_COLORS: (Option & { hex: string })[] = [
-    { id: 'white', name: 'White', price: 0.00, hex: '#FFFFFF' },
-    { id: 'ivory', name: 'Ivory', price: 0.00, hex: '#F5F5DC' },
-    { id: 'black', name: 'Black', price: 0.00, hex: '#000000' },
-    { id: 'grey', name: 'Grey', price: 1.40, hex: '#808080' },
-    { id: 'sage', name: 'Sage', price: 1.40, hex: '#8A9A5B' },
-    { id: 'navy', name: 'Navy', price: 1.40, hex: '#000080' },
-    { id: 'burgundy', name: 'Burgundy', price: 1.40, hex: '#800020' },
-    { id: 'dusty_blue', name: 'Dusty Blue', price: 1.80, hex: '#779ECB' },
-    { id: 'emerald', name: 'Emerald', price: 1.80, hex: '#50C878' },
-    { id: 'terracotta', name: 'Terracotta', price: 1.80, hex: '#E2725B' },
-];
-
-const ENVELOPE_EMBELLISHMENTS: Option[] = [
-    { id: 'monogram_foil', name: 'Monogram Foil-Pressed', price: 3.45 },
-    { id: 'monogram_black', name: 'Monogram Printed (Black Ink)', price: 1.86 },
-    { id: 'monogram_color', name: 'Monogram Printed (Color Ink)', price: 1.90 },
-    { id: 'monogram_white', name: 'Monogram Printed (White Ink)', price: 2.05 },
-    { id: 'outer_foil', name: 'Outer Envelope Foil Design', price: 3.85 },
-    { id: 'outer_print', name: 'Outer Envelope Printed Design', price: 1.85 },
-    { id: 'return_foil', name: 'Return Address Foil-Pressed', price: 3.05 },
-    { id: 'return_black', name: 'Return Address Printed (Black Ink)', price: 1.06 },
-    { id: 'return_color', name: 'Return Address Printed (Color Ink)', price: 1.10 },
-    { id: 'return_white', name: 'Return Address Printed (White Ink)', price: 1.20 },
-];
-
-const ENVELOPE_LINERS: Option[] = [
-    { id: 'plain', name: 'Liner Plain', price: 0.80 },
-    { id: 'digital', name: 'Liner Digital Printed', price: 1.24 },
-    { id: 'foil', name: 'Liner Foil-Pressed', price: 5.05 },
-    { id: 'direct_foil', name: 'Directly Foil-Pressed Inside', price: 4.85 },
-    { id: 'velvet', name: 'Velvet Liner', price: 1.12 },
-    { id: 'velvet_foil', name: 'Velvet Liner Foil-Pressed', price: 5.42 },
-];
-
-const ENVELOPE_SEALS: Option[] = [
-    { id: 'wax_standard', name: 'Standard Wax Seals', price: 0.84 },
-    { id: 'wax_custom', name: 'Custom Wax Seals', price: 1.68 },
-    { id: 'clear_foil', name: 'Clear Seals with Standard Foil', price: 0.45 },
-    { id: 'clear_custom', name: 'Clear Seals with Custom Foil', price: 1.07 },
-];
-
-const ENVELOPE_ADDRESSING: Option[] = [
-    { id: 'guest_foil_gold', name: 'Guest Addressing - Clear Labels (Gold Foil)', price: 0.80 },
-    { id: 'guest_foil_silver', name: 'Guest Addressing - Clear Labels (Silver Foil)', price: 0.80 },
-    { id: 'guest_digital', name: 'Guest Addressing - Labels (Digital Color)', price: 0.70 },
-    { id: 'guest_print_black', name: 'Guest Address Printing (Black Ink)', price: 1.18 },
-    { id: 'guest_print_color', name: 'Guest Address Printing (Color Ink)', price: 1.25 },
-    { id: 'guest_print_white', name: 'Guest Address Printing (White Ink)', price: 1.30 },
-];
-
-const POCKET_MATERIALS: Option[] = [
-    { id: 'matte', name: 'Premium Matte Paper', price: 1.90 },
-    { id: 'shimmer', name: 'Premium Shimmery Paper', price: 2.10 },
-    { id: 'velvet', name: 'Velvet', price: 3.60 },
-];
-
-const POCKET_COLORS: (Option & { hex: string })[] = [
-    { id: 'white', name: 'White', price: 0.00, hex: '#FFFFFF' },
-    { id: 'ivory', name: 'Ivory', price: 0.00, hex: '#F5F5DC' },
-    { id: 'black', name: 'Black', price: 0.00, hex: '#000000' },
-    { id: 'grey', name: 'Grey', price: 1.40, hex: '#808080' },
-    { id: 'sage', name: 'Sage', price: 1.40, hex: '#8A9A5B' },
-    { id: 'navy', name: 'Navy', price: 1.40, hex: '#000080' },
-    { id: 'burgundy', name: 'Burgundy', price: 1.40, hex: '#800020' },
-    { id: 'dusty_blue', name: 'Dusty Blue', price: 1.80, hex: '#779ECB' },
-    { id: 'emerald', name: 'Emerald', price: 1.80, hex: '#50C878' },
-    { id: 'terracotta', name: 'Terracotta', price: 1.80, hex: '#E2725B' },
-];
-
-const POCKET_EMBELLISHMENTS: Option[] = [
-    { id: 'monogram_foil', name: 'Monogram Foil-Pressed', price: 3.90 },
-    { id: 'monogram_digital', name: 'Monogram Digital Printed', price: 1.46 },
-    { id: 'wax_standard', name: 'Standard Wax Seals', price: 1.50 },
-    { id: 'wax_custom', name: 'Custom Wax Seals', price: 2.45 },
-    { id: 'strings', name: 'Strings', price: 1.06 },
-    { id: 'tassels', name: 'Tassels', price: 1.18 },
-];
-
-const FOLIO_STYLES: Option[] = [
-    { id: 'foldable', name: 'Foldable Invitation', price: 0.00 },
-    { id: 'trifold', name: 'Trifold', price: 0.00 },
-    { id: 'hardcover', name: 'Hardcover Folio', price: 0.00 },
-];
-
-const FOLIO_MATERIALS: Record<string, Option[]> = {
-    foldable: [
-        { id: 'matte', name: 'Premium Matte Paper', price: 4.10 },
-        { id: 'shimmer', name: 'Premium Shimmery Paper', price: 4.55 },
-    ],
-    trifold: [
-        { id: 'matte', name: 'Premium Matte Paper', price: 4.25 },
-        { id: 'shimmer', name: 'Premium Shimmery Paper', price: 4.85 },
-        { id: 'velvet', name: 'Velvet', price: 9.35 },
-    ],
-    hardcover: [
-        { id: 'thick_matte', name: 'Premium Thick Matte Paper', price: 7.10 },
-        { id: 'thick_shimmer', name: 'Premium Thick Shimmery Paper', price: 7.55 },
-        { id: 'velvet', name: 'Velvet', price: 10.55 },
-    ],
-};
-
-const FOLIO_EMBELLISHMENTS: Option[] = [
-    { id: 'cover_foil', name: 'Cover Monogram Foil-Pressed', price: 4.01 },
-    { id: 'inner_foil', name: 'Inner Pocket Foil Design', price: 3.15 },
-    { id: 'cover_digital', name: 'Cover Monogram Digital Printed', price: 1.49 },
-    { id: 'inner_digital', name: 'Inner Pocket Design Digital Printed', price: 1.09 },
-    { id: 'strings', name: 'Strings', price: 1.36 },
-    { id: 'ribbons', name: 'Ribbons', price: 2.99 },
-    { id: 'wax_standard', name: 'Standard Wax Seals', price: 1.90 },
-    { id: 'wax_custom', name: 'Custom Wax Seals', price: 2.93 },
-];
 const STEPS = [
     { id: 1, title: 'The Basics', description: 'Quantity & Type' },
     { id: 2, title: 'Materials', description: 'Finish & Shape' },
@@ -310,76 +95,90 @@ export default function CustomDesignPage() {
     const [total, setTotal] = useState(0);
 
     // Calculate Total
+    // Calculate Total
     useEffect(() => {
         let calculatedTotal = 0;
 
+        const addPrice = (option: PricingOption) => {
+            const price = calculateItemPrice(option, quantity);
+            if (option.type === 'flat') {
+                calculatedTotal += price;
+            } else {
+                calculatedTotal += price * quantity;
+            }
+        };
+
         // 1. Base Unit Price (Shape + Material + Print)
-        let unitPrice = printColor.price;
+        addPrice(printColor);
+        if (shape.type !== 'flat') addPrice(shape);
+        else calculatedTotal += shape.price; // Handle flat shape separately if needed, though addPrice covers it if type is set correctly
 
-        if (shape.type !== 'flat') {
-            unitPrice += shape.price;
-        }
+        if (invitationType === 'acrylic') addPrice(acrylicOption);
+        if (invitationType === 'vellum') addPrice(vellumOption);
+        if (invitationType === 'paper') addPrice(paperOption);
 
-        if (invitationType === 'acrylic') unitPrice += acrylicOption.price;
-        if (invitationType === 'vellum') unitPrice += vellumOption.price;
-        if (invitationType === 'paper') unitPrice += paperOption.price;
-
-        // 2. Envelopes (Per Unit)
+        // 2. Envelopes
         if (includeEnvelopes) {
-            unitPrice += envMaterial.price;
-            unitPrice += envColor.price;
+            addPrice(envMaterial);
+            addPrice(envColor);
+
+            selectedEmbellishments.forEach(id => {
+                const opt = ENVELOPE_EMBELLISHMENTS.find(o => o.id === id);
+                if (opt) addPrice(opt);
+            });
+
+            if (selectedLiner) {
+                const opt = ENVELOPE_LINERS.find(o => o.id === selectedLiner);
+                if (opt) addPrice(opt);
+            }
+
+            selectedSeals.forEach(id => {
+                const opt = ENVELOPE_SEALS.find(o => o.id === id);
+                if (opt) addPrice(opt);
+            });
+
+            selectedAddressing.forEach(id => {
+                const opt = ENVELOPE_ADDRESSING.find(o => o.id === id);
+                if (opt) addPrice(opt);
+            });
         }
 
-        // 3. Pockets (Per Unit)
+        // 3. Pockets
         if (includePockets) {
-            unitPrice += pocketMaterial.price;
-            unitPrice += pocketColor.price;
+            addPrice(pocketMaterial);
+            addPrice(pocketColor);
 
             selectedPocketEmbellishments.forEach(id => {
                 const opt = POCKET_EMBELLISHMENTS.find(o => o.id === id);
-                if (opt) unitPrice += opt.price;
+                if (opt) addPrice(opt);
             });
         }
 
-        // 4. Folios (Per Unit)
+        // 4. Folios
         if (includeFolios) {
-            unitPrice += folioMaterial.price;
-            unitPrice += folioColor.price;
+            addPrice(folioMaterial);
+            addPrice(folioColor);
 
             selectedFolioEmbellishments.forEach(id => {
                 const opt = FOLIO_EMBELLISHMENTS.find(o => o.id === id);
-                if (opt) unitPrice += opt.price;
+                if (opt) addPrice(opt);
             });
         }
 
-        // 5. Inserts (Flat Fee - per set, not per unit)
+        // 5. Inserts
         const currentInsertList = insertPrintType === 'foil' ? SUITE_INSERTS_FOIL : SUITE_INSERTS_DIGITAL;
         selectedInserts.forEach(id => {
             const option = currentInsertList.find(o => o.id === id);
             if (option) {
-                calculatedTotal += option.price; // These are flat fees per set
+                addPrice(option);
             }
         });
 
-        // 6. Services (Per Unit)
+        // 6. Services
         selectedServices.forEach(id => {
             const service = SERVICE_ADD_ONS.find(s => s.id === id);
-            if (service && service.type === 'per_unit') {
-                unitPrice += service.price;
-            }
-        });
-
-        calculatedTotal = unitPrice * quantity;
-
-        // 7. Flat Fee Services
-        if (shape.type === 'flat') {
-            calculatedTotal += shape.price;
-        }
-
-        selectedServices.forEach(id => {
-            const service = SERVICE_ADD_ONS.find(s => s.id === id);
-            if (service && service.type === 'flat') {
-                calculatedTotal += service.price;
+            if (service) {
+                addPrice(service);
             }
         });
 
