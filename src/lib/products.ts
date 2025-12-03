@@ -8,7 +8,8 @@ export type Product = {
   category: string;
   price: number;
   description: string;
-  image: string; // Corresponds to id in placeholder-images.json
+  image: string; // Main image
+  gallery?: string[]; // Additional images
   metaTitle?: string;
   metaDescription?: string;
   metaKeywords?: string;

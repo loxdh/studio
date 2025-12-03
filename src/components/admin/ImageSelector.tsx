@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { PlaceHolderImages, type ImagePlaceholder } from '@/lib/placeholder-images';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '../ui/scroll-area';
-import { CheckCircle, Upload, Loader2, Image as ImageIcon } from 'lucide-react';
+import { CheckCircle, Upload, Loader2, Image as ImageIcon, X, Star } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { useStorage } from '@/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -16,20 +16,26 @@ import MediaLibrary from './MediaLibrary';
 
 interface ImageSelectorProps {
     selectedImageId: string | null;
-    onImageSelect: (id: string) => void;
+    galleryImages?: string[];
+    onImageSelect: (mainImage: string, gallery: string[]) => void;
 }
 
-export default function ImageSelector({ selectedImageId, onImageSelect }: ImageSelectorProps) {
+export default function ImageSelector({ selectedImageId, galleryImages = [], onImageSelect }: ImageSelectorProps) {
     const storage = useStorage();
     const { toast } = useToast();
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [uploadedImages, setUploadedImages] = useState<{ id: string, url: string }[]>([]);
     const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
+    // Combine main image and gallery for local state management
+    // Ensure we don't have duplicates and filter out empty strings
+    const allImages = Array.from(new Set(
+        [selectedImageId, ...galleryImages].filter(Boolean) as string[]
+    ));
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
 
         if (!storage) {
             toast({
@@ -41,25 +47,36 @@ export default function ImageSelector({ selectedImageId, onImageSelect }: ImageS
         }
 
         setIsUploading(true);
-        try {
-            const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
-            const snapshot = await uploadBytes(storageRef, file);
-            const downloadURL = await getDownloadURL(snapshot.ref);
+        const newUrls: string[] = [];
 
-            const newImage = { id: downloadURL, url: downloadURL };
-            setUploadedImages(prev => [newImage, ...prev]);
-            onImageSelect(downloadURL);
+        try {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
+                const snapshot = await uploadBytes(storageRef, file);
+                const downloadURL = await getDownloadURL(snapshot.ref);
+                newUrls.push(downloadURL);
+            }
+
+            // Add new images to the list
+            const updatedImages = [...allImages, ...newUrls];
+
+            // If no main image was selected, make the first new one the main image
+            const newMainImage = selectedImageId || newUrls[0];
+            const newGallery = updatedImages.filter(img => img !== newMainImage);
+
+            onImageSelect(newMainImage, newGallery);
 
             toast({
                 title: "Success",
-                description: "Image uploaded successfully."
+                description: `${newUrls.length} image(s) uploaded successfully.`
             });
 
         } catch (error) {
             console.error("Upload error:", error);
             toast({
                 title: "Error",
-                description: "Failed to upload image.",
+                description: "Failed to upload image(s).",
                 variant: "destructive"
             });
         } finally {
@@ -71,8 +88,32 @@ export default function ImageSelector({ selectedImageId, onImageSelect }: ImageS
     };
 
     const handleLibrarySelect = (url: string) => {
-        onImageSelect(url);
+        if (!allImages.includes(url)) {
+            const updatedImages = [...allImages, url];
+            const newMainImage = selectedImageId || url;
+            const newGallery = updatedImages.filter(img => img !== newMainImage);
+            onImageSelect(newMainImage, newGallery);
+        }
         setIsLibraryOpen(false);
+    };
+
+    const setMainImage = (url: string) => {
+        const newGallery = allImages.filter(img => img !== url);
+        onImageSelect(url, newGallery);
+    };
+
+    const removeImage = (url: string) => {
+        const updatedImages = allImages.filter(img => img !== url);
+        if (updatedImages.length === 0) {
+            onImageSelect('', []);
+        } else if (url === selectedImageId) {
+            // If we removed the main image, promote the first gallery image
+            const newMain = updatedImages[0];
+            const newGallery = updatedImages.slice(1);
+            onImageSelect(newMain, newGallery);
+        } else {
+            onImageSelect(selectedImageId!, updatedImages.filter(img => img !== selectedImageId));
+        }
     };
 
     return (
@@ -92,7 +133,7 @@ export default function ImageSelector({ selectedImageId, onImageSelect }: ImageS
                     ) : (
                         <>
                             <Upload className="mr-2 h-4 w-4" />
-                            Upload New
+                            Upload Photos
                         </>
                     )}
                 </Button>
@@ -121,87 +162,59 @@ export default function ImageSelector({ selectedImageId, onImageSelect }: ImageS
                     ref={fileInputRef}
                     className="hidden"
                     accept="image/*"
+                    multiple
                     onChange={handleFileUpload}
                 />
             </div>
 
-            <ScrollArea className="h-72 w-full rounded-md border">
-                <div className="grid grid-cols-3 gap-4 p-4">
-                    {/* Currently Selected Image (if not in uploaded/placeholders list) */}
-                    {selectedImageId && !uploadedImages.find(img => img.id === selectedImageId) && !PlaceHolderImages.find(img => img.id === selectedImageId) && (
-                        <div
-                            className={cn(
-                                'relative aspect-square cursor-pointer rounded-md overflow-hidden border-2 border-primary ring-2 ring-primary'
-                            )}
-                        >
+            {allImages.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    {allImages.map((url, index) => (
+                        <div key={index} className={cn(
+                            "relative aspect-square rounded-md overflow-hidden border-2 group",
+                            url === selectedImageId ? "border-primary ring-2 ring-primary" : "border-border"
+                        )}>
                             <Image
-                                src={selectedImageId}
-                                alt="Selected product image"
+                                src={url}
+                                alt={`Product image ${index + 1}`}
                                 fill
-                                sizes="150px"
                                 className="object-cover"
                             />
-                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                <CheckCircle className="h-8 w-8 text-white" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                <Button
+                                    size="icon"
+                                    variant={url === selectedImageId ? "default" : "secondary"}
+                                    className="h-8 w-8"
+                                    onClick={() => setMainImage(url)}
+                                    title="Set as Main Image"
+                                    type="button"
+                                >
+                                    <Star className={cn("h-4 w-4", url === selectedImageId && "fill-current")} />
+                                </Button>
+                                <Button
+                                    size="icon"
+                                    variant="destructive"
+                                    className="h-8 w-8"
+                                    onClick={() => removeImage(url)}
+                                    title="Remove Image"
+                                    type="button"
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
                             </div>
-                        </div>
-                    )}
-
-                    {/* Uploaded Images (Local Session) */}
-                    {uploadedImages.map((image) => (
-                        <div
-                            key={image.id}
-                            className={cn(
-                                'relative aspect-square cursor-pointer rounded-md overflow-hidden border-2',
-                                selectedImageId === image.id ? 'border-primary ring-2 ring-primary' : 'border-transparent'
-                            )}
-                            onClick={() => onImageSelect(image.id)}
-                        >
-                            <Image
-                                src={image.url}
-                                alt="Uploaded product image"
-                                fill
-                                sizes="150px"
-                                className="object-cover transition-transform hover:scale-105"
-                            />
-                            {selectedImageId === image.id && (
-                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                    <CheckCircle className="h-8 w-8 text-white" />
+                            {url === selectedImageId && (
+                                <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+                                    Main
                                 </div>
                             )}
-                        </div>
-                    ))}
-
-                    {/* Placeholder Images */}
-                    {PlaceHolderImages.map((image: ImagePlaceholder) => (
-                        <div
-                            key={image.id}
-                            className={cn(
-                                'relative aspect-square cursor-pointer rounded-md overflow-hidden border-2',
-                                selectedImageId === image.id ? 'border-primary ring-2 ring-primary' : 'border-transparent'
-                            )}
-                            onClick={() => onImageSelect(image.id)}
-                        >
-                            <Image
-                                src={image.imageUrl}
-                                alt={image.description}
-                                fill
-                                sizes="150px"
-                                className="object-cover transition-transform hover:scale-105"
-                                data-ai-hint={image.imageHint}
-                            />
-                            {selectedImageId === image.id && (
-                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                                    <CheckCircle className="h-8 w-8 text-white" />
-                                </div>
-                            )}
-                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-1">
-                                <p className="text-white text-xs truncate">Placeholder</p>
-                            </div>
                         </div>
                     ))}
                 </div>
-            </ScrollArea>
+            )}
+
+            <p className="text-xs text-muted-foreground mt-2">
+                Upload up to 10 photos. The "Main" image will be shown on the shop front.
+            </p>
         </div>
     );
 }

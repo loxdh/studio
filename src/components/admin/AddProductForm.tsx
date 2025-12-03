@@ -34,6 +34,7 @@ const formSchema = z.object({
   price: z.coerce.number().positive('Price must be a positive number.'),
   category: z.string().min(1, 'Category is required.'),
   image: z.string().min(1, 'Please select an image.'),
+  gallery: z.array(z.string()).optional(),
   metaTitle: z.string().optional(),
   metaDescription: z.string().optional(),
   metaKeywords: z.string().optional(),
@@ -72,6 +73,7 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
       price: 0,
       category: '',
       image: '',
+      gallery: [],
       metaTitle: '',
       metaDescription: '',
       metaKeywords: '',
@@ -180,7 +182,11 @@ export default function AddProductForm({ onProductAdded }: AddProductFormProps) 
               <FormControl>
                 <ImageSelector
                   selectedImageId={field.value}
-                  onImageSelect={field.onChange}
+                  galleryImages={form.watch('gallery')}
+                  onImageSelect={(main, gallery) => {
+                    form.setValue('image', main);
+                    form.setValue('gallery', gallery);
+                  }}
                 />
               </FormControl>
               <FormMessage />
