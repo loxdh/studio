@@ -18,79 +18,104 @@ export default function AdminDashboardPage() {
   const ordersCollection = useMemoFirebase(() => collection(firestore, 'orders'), [firestore]);
   const { data: orders } = useCollection(ordersCollection);
 
-  // Blog Posts
-  const blogCollection = useMemoFirebase(() => collection(firestore, 'blog_posts'), [firestore]);
-  const { data: blogPosts } = useCollection(blogCollection);
-
-  // Calculate Revenue (Mock logic: sum of all orders for now, ideally filter by status 'paid')
+  // Calculate Stats
   const totalRevenue = orders?.reduce((acc, order) => acc + (order.total || 0), 0) || 0;
+  const totalOrders = orders?.length || 0;
+  const pendingOrders = orders?.filter(o => o.status === 'pending').length || 0;
+  const processingOrders = orders?.filter(o => o.status === 'processing').length || 0;
+  const deliveredOrders = orders?.filter(o => o.status === 'delivered').length || 0;
+
+  // Mock data for SalesOverview (replace with real aggregations later)
+  const salesData = {
+    today: 0,
+    yesterday: 0,
+    thisMonth: totalRevenue, // Just using total for now
+    lastMonth: 0,
+    allTime: totalRevenue
+  };
 
   return (
-    <div>
+    <div className="space-y-6">
       <h1 className="font-headline text-4xl mb-8">Admin Dashboard</h1>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+
+      {/* Status Overview */}
+      <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">
-              Across {orders?.length || 0} orders
-            </p>
+          <CardContent className="flex items-center gap-3 p-6">
+            <div className="size-12 rounded-full grid place-items-center [&>svg]:size-5 text-orange-600 bg-orange-100">
+              <ShoppingBag />
+            </div>
+            <div className="flex flex-col gap-y-1">
+              <span className="text-sm text-muted-foreground">Total Orders</span>
+              <span className="text-2xl font-semibold">{totalOrders}</span>
+            </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Orders</CardTitle>
-            <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{orders?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Total orders placed
-            </p>
+          <CardContent className="flex items-center gap-3 p-6">
+            <div className="size-12 rounded-full grid place-items-center [&>svg]:size-5 text-teal-600 bg-teal-100">
+              <Package />
+            </div>
+            <div className="flex flex-col gap-y-1">
+              <span className="text-sm text-muted-foreground">Pending</span>
+              <span className="text-2xl font-semibold">{pendingOrders}</span>
+            </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Products</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{products?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Active in catalog
-            </p>
+          <CardContent className="flex items-center gap-3 p-6">
+            <div className="size-12 rounded-full grid place-items-center [&>svg]:size-5 text-blue-600 bg-blue-100">
+              <Users />
+            </div>
+            <div className="flex flex-col gap-y-1">
+              <span className="text-sm text-muted-foreground">Processing</span>
+              <span className="text-2xl font-semibold">{processingOrders}</span>
+            </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Blog Posts</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{blogPosts?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">
-              Published posts
-            </p>
+          <CardContent className="flex items-center gap-3 p-6">
+            <div className="size-12 rounded-full grid place-items-center [&>svg]:size-5 text-emerald-600 bg-emerald-100">
+              <DollarSign />
+            </div>
+            <div className="flex flex-col gap-y-1">
+              <span className="text-sm text-muted-foreground">Delivered</span>
+              <span className="text-2xl font-semibold">{deliveredOrders}</span>
+            </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Sales Overview */}
+      <div className="grid md:grid-cols-2 xl:grid-cols-5 gap-2">
+        <div className="p-6 rounded-lg flex flex-col items-center justify-center space-y-3 text-white text-center bg-teal-600">
+          <div className="[&>svg]:size-8"><FileText /></div>
+          <span className="text-base">Today Orders</span>
+          <span className="text-2xl font-semibold">${salesData.today.toFixed(2)}</span>
+        </div>
+        <div className="p-6 rounded-lg flex flex-col items-center justify-center space-y-3 text-white text-center bg-orange-400">
+          <div className="[&>svg]:size-8"><FileText /></div>
+          <span className="text-base">Yesterday Orders</span>
+          <span className="text-2xl font-semibold">${salesData.yesterday.toFixed(2)}</span>
+        </div>
+        <div className="p-6 rounded-lg flex flex-col items-center justify-center space-y-3 text-white text-center bg-blue-500">
+          <div className="[&>svg]:size-8"><DollarSign /></div>
+          <span className="text-base">This Month</span>
+          <span className="text-2xl font-semibold">${salesData.thisMonth.toFixed(2)}</span>
+        </div>
+        <div className="p-6 rounded-lg flex flex-col items-center justify-center space-y-3 text-white text-center bg-cyan-600">
+          <div className="[&>svg]:size-8"><DollarSign /></div>
+          <span className="text-base">Last Month</span>
+          <span className="text-2xl font-semibold">${salesData.lastMonth.toFixed(2)}</span>
+        </div>
+        <div className="p-6 rounded-lg flex flex-col items-center justify-center space-y-3 text-white text-center bg-emerald-600">
+          <div className="[&>svg]:size-8"><DollarSign /></div>
+          <span className="text-base">All-Time Sales</span>
+          <span className="text-2xl font-semibold">${salesData.allTime.toFixed(2)}</span>
+        </div>
       </div>
 
       {orders && <AdminCharts orders={orders} />}
-
-      <div className="mt-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Welcome, Administrator!</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Use the navigation on the left to manage products, view orders, and generate blog content using AI. This dashboard provides a central hub for all your e-commerce management needs.</p>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }
