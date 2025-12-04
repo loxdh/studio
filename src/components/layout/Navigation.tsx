@@ -78,6 +78,7 @@ const Navigation = () => {
     0
   );
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [cartOpen, setCartOpen] = React.useState(false);
   const [isScrolled, setIsScrolled] = React.useState(false);
 
   React.useEffect(() => {
@@ -167,12 +168,12 @@ const Navigation = () => {
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link href="/custom-design">Custom Design</Link>
+                  <Link href="/custom-design">Custom Order</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link href="/about">About</Link>
+                  <Link href="/blog">Blog</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
@@ -249,10 +250,9 @@ const Navigation = () => {
                 </AccordionItem>
               </Accordion>
 
-              <Link href="/custom-design" className="py-2" onClick={() => setMobileMenuOpen(false)}>Custom Design</Link>
-              <Link href="/about" className="py-2" onClick={() => setMobileMenuOpen(false)}>About</Link>
-              <Link href="/contact" className="py-2" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
+              <Link href="/custom-design" className="py-2" onClick={() => setMobileMenuOpen(false)}>Custom Order</Link>
               <Link href="/blog" className="py-2" onClick={() => setMobileMenuOpen(false)}>Blog</Link>
+              <Link href="/contact" className="py-2" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
               <Link href="/account" className="py-2" onClick={() => setMobileMenuOpen(false)}>My Account</Link>
               <Link href="/wishlist" className="py-2" onClick={() => setMobileMenuOpen(false)}>Wishlist</Link>
             </div>
@@ -277,7 +277,7 @@ const Navigation = () => {
           <Button asChild variant="ghost" className="hidden lg:flex">
             <Link href="/account">My Account</Link>
           </Button>
-          <Sheet>
+          <Sheet open={cartOpen} onOpenChange={setCartOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">
                 <ShoppingBag className="h-5 w-5" />
@@ -289,7 +289,7 @@ const Navigation = () => {
                 <span className="sr-only">Shopping Cart</span>
               </Button>
             </SheetTrigger>
-            <CartSheet />
+            <CartSheet onClose={() => setCartOpen(false)} />
           </Sheet>
           <ThemeToggle />
         </div>

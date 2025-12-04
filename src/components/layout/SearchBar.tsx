@@ -25,9 +25,17 @@ export default function SearchBar() {
     );
     const { data: products } = useCollection<Product>(productsCollection);
 
-    const filteredProducts = query.trim() === '' ? [] : products?.filter(product =>
-        product.name.toLowerCase().includes(query.toLowerCase())
-    ).slice(0, 5) || [];
+    const filteredProducts = query.trim() === '' ? [] : products?.filter(product => {
+        const searchLower = query.toLowerCase();
+        const nameMatch = product.name.toLowerCase().includes(searchLower);
+        const categoryMatch = product.category.toLowerCase().includes(searchLower);
+        const descriptionMatch = product.description
+            .replace(/<[^>]*>?/gm, '') // Strip HTML
+            .toLowerCase()
+            .includes(searchLower);
+
+        return nameMatch || categoryMatch || descriptionMatch;
+    }).slice(0, 5) || [];
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -43,7 +51,7 @@ export default function SearchBar() {
         e.preventDefault();
         if (query.trim()) {
             setIsFocused(false);
-            router.push(`/shop?search=${encodeURIComponent(query)}`);
+            router.push(`/products?search=${encodeURIComponent(query)}`);
         }
     };
 
@@ -52,8 +60,8 @@ export default function SearchBar() {
             <form onSubmit={handleSearch} className="relative flex items-center">
                 <Input
                     type="search"
-                    placeholder="Search products..."
-                    className="pr-10"
+                    placeholder="Search..."
+                    className="pr-10 bg-transparent border-black text-black placeholder:text-black/60 focus-visible:ring-black focus-visible:ring-offset-0 rounded-full"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     onFocus={() => setIsFocused(true)}
@@ -64,7 +72,7 @@ export default function SearchBar() {
                     size="icon"
                     className="absolute right-0 top-0 h-full hover:bg-transparent"
                 >
-                    <Search className="h-4 w-4 text-muted-foreground" />
+                    <Search className="h-4 w-4 text-black" />
                     <span className="sr-only">Search</span>
                 </Button>
             </form>

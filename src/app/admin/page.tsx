@@ -2,20 +2,25 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Package, FileText, Users, ShoppingBag, DollarSign } from 'lucide-react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 
 import AdminCharts from '@/components/admin/AdminCharts';
 
 export default function AdminDashboardPage() {
   const firestore = useFirestore();
+  const { user } = useUser();
 
   // Products
   const productsCollection = useMemoFirebase(() => collection(firestore, 'products'), [firestore]);
   const { data: products } = useCollection(productsCollection);
 
-  // Orders
-  const ordersCollection = useMemoFirebase(() => collection(firestore, 'orders'), [firestore]);
+  // Orders - Only fetch if user is authenticated
+  const ordersCollection = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return collection(firestore, 'orders');
+  }, [firestore, user]);
+
   const { data: orders } = useCollection(ordersCollection);
 
   // Calculate Stats

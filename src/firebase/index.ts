@@ -38,8 +38,31 @@ export function getSdks(firebaseApp: FirebaseApp) {
     firebaseApp,
     auth: getAuth(firebaseApp),
     firestore: getFirestore(firebaseApp),
-    storage: getStorage(firebaseApp, "gs://studio-5061319817-c1d85.firebasestorage.app")
+    storage: getStorage(firebaseApp)
   };
+}
+
+// Helper to clear persistence (useful for "Unexpected state" errors in dev)
+export async function clearPersistence(firebaseApp: FirebaseApp) {
+  try {
+    const { terminate, clearIndexedDbPersistence, getFirestore } = await import('firebase/firestore');
+    const db = getFirestore(firebaseApp);
+    await terminate(db);
+    await clearIndexedDbPersistence(db);
+    console.log('Firebase persistence cleared successfully. Reloading page...');
+    window.location.reload();
+  } catch (e) {
+    console.error('Failed to clear persistence:', e);
+  }
+}
+
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  // @ts-ignore
+  window.clearFirebaseCache = () => {
+    const app = getApps()[0];
+    if (app) clearPersistence(app);
+  };
+  console.log('🔧 DevTools: Run window.clearFirebaseCache() to fix Firestore "Unexpected state" errors.');
 }
 
 export * from './provider';

@@ -4,11 +4,16 @@ import ProductDetailClient from '@/components/products/ProductDetailClient';
 import { getProductBySlug } from '@/lib/firebase-server';
 
 type Props = {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
+function stripHtml(html: string) {
+  return html.replace(/<[^>]*>?/gm, '');
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const product = await getProductBySlug(params.slug);
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
 
   if (!product) {
     return {
@@ -16,23 +21,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  const plainDescription = stripHtml(product.description);
+
   return {
     title: product.metaTitle || `${product.name} | United Love Luxe`,
-    description: product.metaDescription || product.description,
+    description: product.metaDescription || plainDescription,
     openGraph: {
       title: product.name,
-      description: product.description,
+      description: plainDescription,
       images: [product.image],
     },
   };
 }
 
 export default async function ProductPage({ params }: Props) {
-  const product = await getProductBySlug(params.slug);
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
 
   if (!product) {
     notFound();
   }
+
+  const plainDescription = stripHtml(product.description);
 
   // JSON-LD Structured Data
   const jsonLd = {
@@ -40,7 +50,7 @@ export default async function ProductPage({ params }: Props) {
     '@type': 'Product',
     name: product.name,
     image: product.image,
-    description: product.description,
+    description: plainDescription,
     sku: product.id,
     offers: {
       '@type': 'Offer',

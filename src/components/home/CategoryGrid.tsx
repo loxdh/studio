@@ -19,7 +19,7 @@ const categories = [
         description: 'Announce your date in style'
     },
     {
-        title: 'Custom Design',
+        title: 'Custom Order',
         href: '/products?category=Custom Services',
         imageId: 'prod-6',
         description: 'Bespoke creations just for you'

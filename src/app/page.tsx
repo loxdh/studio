@@ -50,7 +50,7 @@ export default function Home() {
               <Link href="/products">Shop Collection</Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="text-lg px-10 py-7 rounded-full backdrop-blur-md bg-background/30 border-primary/20 hover:bg-background/50 transition-all duration-300">
-              <Link href="/custom-design">Custom Design</Link>
+              <Link href="/custom-design">Custom Order</Link>
             </Button>
           </div>
         </div>
@@ -73,7 +73,7 @@ export default function Home() {
             <div className="hidden md:block absolute top-12 left-[16%] right-[16%] h-0.5 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
 
             {[
-              { step: '01', title: 'Choose Your Style', desc: 'Browse our curated collections or start a custom design from scratch.' },
+              { step: '01', title: 'Choose Your Style', desc: 'Browse our curated collections or start a custom order from scratch.' },
               { step: '02', title: 'Customize Details', desc: 'Select your colors, paper types, and add personal touches with our design tool.' },
               { step: '03', title: 'We Create & Ship', desc: 'Our artisans craft your order with care and ship it directly to your door.' }
             ].map((item, i) => (

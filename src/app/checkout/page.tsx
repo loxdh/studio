@@ -20,7 +20,12 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { loadStripe } from '@stripe/stripe-js';
 
 // Initialize Stripe
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
+
+if (!stripeKey) {
+    console.error("Stripe Publishable Key is missing. Checkout will not work.");
+}
 
 const checkoutSchema = z.object({
     firstName: z.string().min(2, 'First name is required'),
@@ -100,6 +105,11 @@ export default function CheckoutPage() {
             }
 
             // 3. Redirect to Stripe
+            // 3. Redirect to Stripe
+            if (!stripePromise) {
+                throw new Error("Stripe is not configured. Please check your environment variables.");
+            }
+
             const stripe = await stripePromise;
             if (stripe) {
                 const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });

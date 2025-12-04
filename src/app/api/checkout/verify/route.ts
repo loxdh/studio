@@ -39,9 +39,9 @@ export async function GET(request: Request) {
                 // Admin Alert
                 await resend.emails.send({
                     from: 'Studio <onboarding@resend.dev>',
-                    to: ['admin@example.com'], // Replace with actual admin email
+                    to: [process.env.ADMIN_EMAIL || 'admin@example.com'], // Replace with actual admin email
                     subject: `New Order: #${orderId.slice(0, 8).toUpperCase()}`,
-                    html: `<p>New order received for $${total.toFixed(2)}. <a href="http://localhost:9002/admin/orders/${orderId}">View Order</a></p>`
+                    html: `<p>New order received for $${total.toFixed(2)}. <a href="http://localhost:3000/admin/orders/${orderId}">View Order</a></p>`
                 });
             }
 

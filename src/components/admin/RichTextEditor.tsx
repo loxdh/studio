@@ -14,7 +14,7 @@ const MenuBar = ({ editor }: { editor: any }) => {
   const storage = useStorage();
 
   const addImage = useCallback(() => {
-    if (!editor) return;
+    if (!editor || !storage) return;
     const input = document.createElement('input');
     input.setAttribute('type', 'file');
     input.setAttribute('accept', 'image/*');
@@ -23,7 +23,9 @@ const MenuBar = ({ editor }: { editor: any }) => {
     input.onchange = async () => {
       if (input.files) {
         const file = input.files[0];
+
         try {
+          if (!storage) throw new Error("Storage not initialized");
           const storageRef = ref(storage, `media/${Date.now()}_${file.name}`);
           const uploadResult = await uploadBytes(storageRef, file);
           const downloadURL = await getDownloadURL(uploadResult.ref);
@@ -62,47 +64,48 @@ interface RichTextEditorProps {
 }
 
 export const RichTextEditor = ({ value, onChange }: RichTextEditorProps) => {
-    const [isMounted, setIsMounted] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
-    const editor = useEditor({
-        extensions: [
-        StarterKit.configure({
-            bulletList: {
-            keepMarks: true,
-            keepAttributes: false, 
-            },
-            orderedList: {
-            keepMarks: true,
-            keepAttributes: false, 
-            },
-        }),
-        Image,
-        ],
-        content: value,
-        onUpdate: ({ editor }) => {
-        onChange(editor.getHTML());
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        bulletList: {
+          keepMarks: true,
+          keepAttributes: false,
         },
-        editorProps: {
-        attributes: {
-            class: 'prose dark:prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-2xl m-5 focus:outline-none min-h-[200px]',
+        orderedList: {
+          keepMarks: true,
+          keepAttributes: false,
         },
-        },
-    }, [value]);
+      }),
+      Image,
+    ],
+    content: value,
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
+    },
+    editorProps: {
+      attributes: {
+        class: 'prose dark:prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-2xl m-5 focus:outline-none min-h-[200px]',
+      },
+    },
+    immediatelyRender: false,
+  }, [value]);
 
-    useEffect(() => {
-        setIsMounted(true);
-    }, []);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
-    // This is the key fix: We are re-initializing the editor's content once it has mounted on the client.
-    useEffect(() => {
-        if (isMounted && editor && !editor.isDestroyed) {
-            editor.commands.setContent(value);
-        }
-    }, [isMounted, value, editor]);
-
-    if (!isMounted) {
-        return null; // Or a loading spinner
+  // This is the key fix: We are re-initializing the editor's content once it has mounted on the client.
+  useEffect(() => {
+    if (isMounted && editor && !editor.isDestroyed) {
+      editor.commands.setContent(value);
     }
+  }, [isMounted, value, editor]);
+
+  if (!isMounted) {
+    return null; // Or a loading spinner
+  }
 
   return (
     <div className="border border-input rounded-md">

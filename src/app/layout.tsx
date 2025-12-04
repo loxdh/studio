@@ -7,6 +7,8 @@ import Footer from '@/components/layout/Footer';
 import { CartProvider } from '@/components/cart/CartProvider';
 import { WishlistProvider } from '@/components/wishlist/WishlistProvider';
 import { FirebaseClientProvider } from '@/firebase';
+import { NewsletterPopup } from '@/components/NewsletterPopup';
+import { CookieConsent } from '@/components/CookieConsent';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://unitedloveluxe.com'),
@@ -88,6 +90,8 @@ export default function RootLayout({
                   <Footer />
                 </div>
                 <Toaster />
+                <NewsletterPopup />
+                <CookieConsent />
               </WishlistProvider>
             </CartProvider>
           </FirebaseClientProvider>

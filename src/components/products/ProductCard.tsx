@@ -42,7 +42,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
     <Link href={`/products/${product.slug}`} className="block relative group">
       <Card className="overflow-hidden rounded-lg border-none shadow-sm transition-all duration-300 hover:shadow-lg">
         <CardHeader className="p-0">
-          <div className="relative h-[400px] w-full bg-muted overflow-hidden">
+          <div className="relative aspect-square w-full bg-muted overflow-hidden">
             {/* Main Image */}
             {(productImage || product.image.startsWith('http')) && (
               <Image

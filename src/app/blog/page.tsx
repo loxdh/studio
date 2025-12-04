@@ -19,7 +19,7 @@ type BlogPost = {
 export default function BlogPage() {
   const firestore = useFirestore();
   const postsQuery = useMemoFirebase(
-    () => query(collection(firestore, 'posts'), where('published', '==', true), orderBy('createdAt', 'desc')),
+    () => query(collection(firestore, 'blog_posts'), where('published', '==', true), orderBy('createdAt', 'desc')),
     [firestore]
   );
 

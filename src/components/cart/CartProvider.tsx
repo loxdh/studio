@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useState, ReactNode } from 'react';
+import { createContext, useState, useEffect, ReactNode } from 'react';
 import type { Product } from '@/lib/products';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,6 +15,7 @@ export type CartContextType = {
   addToCart: (product: Product, quantity?: number, customizations?: Record<string, string>) => void;
   removeFromCart: (productId: string, customizations?: Record<string, string>) => void;
   updateQuantity: (productId: string, quantity: number, customizations?: Record<string, string>) => void;
+  clearCart: () => void;
   cartTotal: number;
 };
 
@@ -23,6 +24,27 @@ export const CartContext = createContext<CartContextType | null>(null);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const { toast } = useToast();
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const savedCart = localStorage.getItem('cart');
+    if (savedCart) {
+      try {
+        setCartItems(JSON.parse(savedCart));
+      } catch (e) {
+        console.error("Failed to parse cart from localStorage", e);
+      }
+    }
+    setIsInitialized(true);
+  }, []);
+
+  // Save to localStorage whenever cart changes
+  useEffect(() => {
+    if (isInitialized) {
+      localStorage.setItem('cart', JSON.stringify(cartItems));
+    }
+  }, [cartItems, isInitialized]);
 
   const areCustomizationsEqual = (c1?: Record<string, string>, c2?: Record<string, string>) => {
     if (!c1 && !c2) return true;
@@ -75,6 +97,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const clearCart = () => {
+    setCartItems([]);
+    localStorage.removeItem('cart');
+  };
+
   const cartTotal = cartItems.reduce(
     (total, item) => total + item.product.price * item.quantity,
     0
@@ -87,6 +114,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         addToCart,
         removeFromCart,
         updateQuantity,
+        clearCart,
         cartTotal,
       }}
     >

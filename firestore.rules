@@ -1,26 +1,3 @@
-/**
- * Core Philosophy: This ruleset implements a Role-Based Access Control (RBAC) model
- * for an e-commerce platform. The core principle is that all content (products,
- * categories, blog articles) is publicly readable by anyone, but can only be
- * created, modified, or deleted by authenticated users who have an "admin" role.
- *
- * Data Structure: The data is organized into flat, top-level collections for
- * `products`, `categories`, and `blog_articles`. A dedicated `/roles_admin`
- * collection is used to manage authorization.
- *
- * Key Security Decisions:
- * - Public Read-Only Access: All primary content collections are open for read
- *   and list operations to support anonymous browsing of the e-commerce site.
- * - Admin-Guarded Writes: All write operations (`create`, `update`, `delete`)
- *   on content collections are strictly limited to admin users.
- * - Role-Based Authorization: A user is considered an admin if a document with
- *   their UID exists in the `/roles_admin` collection. This avoids costly lookups
- *   and keeps authorization logic simple and performant.
- * - Admin Management: The `/roles_admin` collection itself is protected,
- *   allowing only existing admins to view or manage the list of other admins.
- *   This prevents unauthorized privilege escalation. Initial admin users must be
- *   added via the Firebase Console or a trusted backend script.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -29,117 +6,73 @@ service cloud.firestore {
     // Helper Functions
     // ----------------------------------------------------------------------
 
-    /**
-     * Checks if the user is authenticated.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * Checks if the authenticated user has an admin role.
-     * An admin is defined by the existence of a document in the /roles_admin
-     * collection where the document ID matches the user's UID.
-     * This check is fast and efficient as it only verifies existence.
-     */
     function isAdmin() {
+      // Check if the user has a document in the 'roles_admin' collection
       return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
-    }
-
-    /**
-     * Ensures that a state-changing operation (update, delete) is being
-     * performed on a document that actually exists.
-     */
-    function isExistingDoc() {
-      return resource != null;
     }
 
     // ----------------------------------------------------------------------
     // Collection Rules
     // ----------------------------------------------------------------------
 
-    /**
-     * @description Controls access to the products collection.
-     */
     match /products/{productId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    /**
-     * @description Controls access to the categories collection.
-     */
     match /categories/{categoryId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    /**
-     * @description Controls access to the blog posts collection.
-     */
     match /blog_posts/{postId} {
-        allow read: if true;
-        allow write: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
-    /**
-     * @description Controls access to the media collection.
-     */
     match /media/{mediaId} {
-        allow read: if true;
-        allow write: if isAdmin();
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
-    /**
-     * @description Secures the admin role management collection.
-     */
     match /roles_admin/{userId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin() && isExistingDoc();
-      allow delete: if isAdmin() && isExistingDoc();
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow write: if false; // Only manually created via Console
     }
 
-    /**
-     * @description Controls access to the users collection.
-     */
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * @description Controls access to the quotes collection.
-     */
     match /quotes/{quoteId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
-    /**
-     * @description Controls access to the files subcollection.
-     */
     match /users/{userId}/files/{fileId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * @description Controls access to the orders collection.
-     */
     match /orders/{orderId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
       allow update, delete: if isAdmin();
     }
 
-    /**
-     * @description Controls access to the reviews collection.
-     */
     match /reviews/{reviewId} {
       allow read, list: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSignedIn() && (request.resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /subscribers/{subscriberId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
     }
   }
 }

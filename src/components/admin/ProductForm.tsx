@@ -24,6 +24,7 @@ import {
 import { collection, serverTimestamp, query, orderBy, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import ImageSelector from './ImageSelector';
+import RichTextEditor from './RichTextEditor';
 import { Separator } from '../ui/separator';
 import { categoriesForSelect, Product } from '@/lib/products';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -104,7 +105,12 @@ export default function ProductForm({ initialData, productId, onSuccess }: Produ
     function onSubmit(values: z.infer<typeof formSchema>) {
         const productData = {
             ...values,
-            slug: values.name.toLowerCase().replace(/\s+/g, '-'),
+            slug: values.name
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '') // Remove special chars
+                .trim()
+                .replace(/\s+/g, '-') // Replace spaces with hyphens
+                .replace(/-+/g, '-'), // Prevent multiple hyphens
             updatedAt: serverTimestamp(),
         };
 
@@ -163,7 +169,11 @@ export default function ProductForm({ initialData, productId, onSuccess }: Produ
                         <FormItem>
                             <FormLabel>Description</FormLabel>
                             <FormControl>
-                                <Textarea placeholder="A detailed description of the product." {...field} />
+                                <RichTextEditor
+                                    content={field.value}
+                                    onChange={field.onChange}
+                                    placeholder="A detailed description of the product..."
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>

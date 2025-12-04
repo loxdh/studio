@@ -23,7 +23,7 @@ export async function POST(request: Request) {
                 await resend.emails.send({
                     from: 'Studio <onboarding@resend.dev>', // Default Resend testing email
                     to: [userEmail],
-                    subject: 'Your Custom Design Quote Saved',
+                    subject: 'Your Custom Order Quote Saved',
                     react: QuoteEmail({ customerName: userEmail.split('@')[0], quoteId, details }),
                 });
             }
@@ -54,12 +54,12 @@ export async function POST(request: Request) {
             }
 
             // Admin Alert for Order
-            const adminEmail = 'admin@example.com';
+            const adminEmail = process.env.ADMIN_EMAIL || 'admin@example.com';
             await resend.emails.send({
                 from: 'Studio <onboarding@resend.dev>',
                 to: [adminEmail],
                 subject: `New Order: #${orderId.slice(0, 8).toUpperCase()}`,
-                html: `<p>New order received for $${total.toFixed(2)}. <a href="http://localhost:9002/admin/orders/${orderId}">View Order</a></p>`
+                html: `<p>New order received for $${total.toFixed(2)}. <a href="http://localhost:3000/admin/orders/${orderId}">View Order</a></p>`
             });
 
             return NextResponse.json({ success: true });

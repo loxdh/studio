@@ -15,6 +15,8 @@ export type Product = {
   metaKeywords?: string;
   productType?: ProductType;
   customizationOptions?: string[]; // For premade: e.g. ["Names", "Date", "Venue"]
+  createdAt?: any;
+  updatedAt?: any;
 };
 
 const productCategories = [

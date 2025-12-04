@@ -1,9 +1,10 @@
 'use client';
 
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { useState } from 'react';
 import {
     Table,
     TableBody,
@@ -15,7 +16,15 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Eye, Loader2 } from 'lucide-react';
+import { Eye, Loader2, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 type Order = {
     id: string;
@@ -32,13 +41,47 @@ type Order = {
 
 export default function AdminOrdersPage() {
     const firestore = useFirestore();
+    const { user } = useUser();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [sortOption, setSortOption] = useState('newest');
 
     const ordersQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
+        if (!firestore || !user) return null;
         return query(collection(firestore, 'orders'), orderBy('createdAt', 'desc'));
-    }, [firestore]);
+    }, [firestore, user]);
 
     const { data: orders, isLoading } = useCollection<Order>(ordersQuery);
+
+    const filteredOrders = orders?.filter((order) => {
+        const matchesSearch =
+            searchTerm === '' ||
+            order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            order.shippingDetails?.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            order.shippingDetails?.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            order.shippingDetails?.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const matchesStatus =
+            statusFilter === 'all' || order.status === statusFilter;
+
+        return matchesSearch && matchesStatus;
+    });
+
+    const sortedOrders = [...(filteredOrders || [])].sort((a, b) => {
+        if (sortOption === 'newest') {
+            return (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0);
+        }
+        if (sortOption === 'oldest') {
+            return (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0);
+        }
+        if (sortOption === 'amount-high') {
+            return b.total - a.total;
+        }
+        if (sortOption === 'amount-low') {
+            return a.total - b.total;
+        }
+        return 0;
+    });
 
     if (isLoading) {
         return (
@@ -52,14 +95,53 @@ export default function AdminOrdersPage() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold tracking-tight">Orders</h1>
+                <div className="text-muted-foreground">
+                    {sortedOrders.length} orders found
+                </div>
+            </div>
+
+            <div className="flex flex-col md:flex-row gap-4">
+                <div className="relative flex-1">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search orders..."
+                        className="pl-8"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filter by Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="pending_payment">Pending Payment</SelectItem>
+                        <SelectItem value="processing">Processing</SelectItem>
+                        <SelectItem value="shipped">Shipped</SelectItem>
+                        <SelectItem value="delivered">Delivered</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Select value={sortOption} onValueChange={setSortOption}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="newest">Newest</SelectItem>
+                        <SelectItem value="oldest">Oldest</SelectItem>
+                        <SelectItem value="amount-high">Amount: High to Low</SelectItem>
+                        <SelectItem value="amount-low">Amount: Low to High</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Recent Orders</CardTitle>
+                    <CardTitle>Order List</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    {orders && orders.length > 0 ? (
+                    {sortedOrders.length > 0 ? (
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -72,7 +154,7 @@ export default function AdminOrdersPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {orders.map((order) => (
+                                {sortedOrders.map((order) => (
                                     <TableRow key={order.id}>
                                         <TableCell className="font-medium">
                                             #{order.id.slice(0, 8).toUpperCase()}
@@ -99,10 +181,12 @@ export default function AdminOrdersPage() {
                                                         ? 'default'
                                                         : order.status === 'shipped'
                                                             ? 'secondary'
-                                                            : 'outline'
+                                                            : order.status === 'cancelled'
+                                                                ? 'destructive'
+                                                                : 'outline'
                                                 }
                                             >
-                                                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                                {order.status.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
@@ -122,7 +206,7 @@ export default function AdminOrdersPage() {
                         </Table>
                     ) : (
                         <div className="text-center py-12 text-muted-foreground">
-                            No orders found.
+                            No orders found matching your criteria.
                         </div>
                     )}
                 </CardContent>

@@ -105,7 +105,7 @@ export default function ProductDetailClient({
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Image Section */}
-          <div className="relative aspect-[3/4] overflow-hidden rounded-lg shadow-lg">
+          <div className="relative aspect-square overflow-hidden rounded-lg shadow-lg">
             <Image
               src={activeImage}
               alt={product.name}
@@ -238,7 +238,7 @@ export default function ProductDetailClient({
           )}
 
           {/* Main Image */}
-          <div className="flex-1 relative aspect-[3/4] overflow-hidden rounded-lg shadow-sm group bg-muted">
+          <div className="flex-1 relative aspect-square overflow-hidden rounded-lg shadow-sm group bg-muted">
             {/* Image Carousel Arrows */}
             {galleryImages.length > 1 && (
               <>
@@ -381,9 +381,10 @@ export default function ProductDetailClient({
               <AccordionItem value="description">
                 <AccordionTrigger className="text-lg font-medium">Description</AccordionTrigger>
                 <AccordionContent>
-                  <div className="text-muted-foreground leading-relaxed text-base whitespace-pre-wrap">
-                    {product.description}
-                  </div>
+                  <div
+                    className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: product.description }}
+                  />
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="production">
@@ -440,7 +441,7 @@ export default function ProductDetailClient({
                 );
                 return (
                   <Link key={related.id} href={`/products/${related.slug}`} className="group block">
-                    <div className="relative aspect-[3/4] overflow-hidden rounded-md bg-muted mb-3">
+                    <div className="relative aspect-square overflow-hidden rounded-md bg-muted mb-3">
                       {(relatedImage || related.image.startsWith('http')) && (
                         <Image
                           src={relatedImage ? relatedImage.imageUrl : related.image}

@@ -17,13 +17,15 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFirestore } from '@/firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { MediaLibrary } from '@/components/admin/MediaLibrary';
 import dynamic from 'next/dynamic';
 import { useMemo } from 'react';
+import { X } from 'lucide-react';
+import Image from 'next/image';
 
 const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor').then(mod => mod.RichTextEditor), { ssr: false });
 
@@ -72,7 +74,7 @@ export function BlogPostForm({ post }: { post?: any }) {
       };
 
       if (post) {
-        // Update logic here
+        await updateDoc(doc(firestore, 'blog_posts', post.id), docData);
       } else {
         await addDoc(collection(firestore, 'blog_posts'), {
           ...docData,
@@ -214,7 +216,27 @@ export function BlogPostForm({ post }: { post?: any }) {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <MediaLibrary onSelect={(url) => field.onChange(url)} />
+                        {field.value ? (
+                          <div className="relative aspect-video w-full overflow-hidden rounded-lg border">
+                            <Image
+                              src={field.value}
+                              alt="Featured"
+                              fill
+                              className="object-cover"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-2 right-2 h-8 w-8"
+                              onClick={() => field.onChange('')}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <MediaLibrary onSelect={(url) => field.onChange(url)} />
+                        )}
                       </FormControl>
                       <FormMessage />
                     </FormItem>

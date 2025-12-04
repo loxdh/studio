@@ -7,6 +7,13 @@ import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
 import type { Product } from '@/lib/products';
 import { useSearchParams, useRouter } from 'next/navigation';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function ProductsContent() {
   const searchParams = useSearchParams();
@@ -43,12 +50,27 @@ function ProductsContent() {
 
   const categories = products ? [...new Set(products.map((p) => p.category))] : [];
 
+  const [sortOption, setSortOption] = useState('newest');
+
   const filteredProducts = products?.filter((p) => {
     const matchesCategory = selectedCategory ? p.category === selectedCategory : true;
     const matchesSearch = searchParam
-      ? p.name.toLowerCase().includes(searchParam.toLowerCase()) || p.description.toLowerCase().includes(searchParam.toLowerCase())
+      ? p.name.toLowerCase().includes(searchParam.toLowerCase()) ||
+      p.description.replace(/<[^>]*>?/gm, '').toLowerCase().includes(searchParam.toLowerCase())
       : true;
     return matchesCategory && matchesSearch;
+  });
+
+  const sortedProducts = [...(filteredProducts || [])].sort((a, b) => {
+    if (sortOption === 'price-asc') return a.price - b.price;
+    if (sortOption === 'price-desc') return b.price - a.price;
+    if (sortOption === 'newest') {
+      // Sort by createdAt if available, otherwise fallback to name
+      const dateA = a.createdAt?.seconds || 0;
+      const dateB = b.createdAt?.seconds || 0;
+      return dateB - dateA;
+    }
+    return 0;
   });
 
   if (isLoading) {
@@ -93,8 +115,24 @@ function ProductsContent() {
         </aside>
 
         <main className="flex-1">
-          <ProductGrid products={filteredProducts || []} />
-          {filteredProducts?.length === 0 && (
+          <div className="flex justify-between items-center mb-6">
+            <p className="text-sm text-muted-foreground">
+              {sortedProducts.length} products found
+            </p>
+            <Select value={sortOption} onValueChange={setSortOption}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest</SelectItem>
+                <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                <SelectItem value="price-desc">Price: High to Low</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <ProductGrid products={sortedProducts} />
+          {sortedProducts.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
               No products found matching your criteria.
             </div>

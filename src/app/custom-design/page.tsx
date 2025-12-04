@@ -36,6 +36,27 @@ const QUANTITY_TIERS = [25, 35, 50, 60, 70, 80, 90, 100, 125, 150, 175, 200, 250
 
 type InvitationType = 'acrylic' | 'vellum' | 'paper';
 
+const INVITATION_TYPES = [
+    {
+        id: 'acrylic' as InvitationType,
+        name: 'Acrylic',
+        description: 'Modern, crystal-clear elegance. Rigid and substantial, perfect for making a statement.',
+        price: 0 // Base price handled in options
+    },
+    {
+        id: 'vellum' as InvitationType,
+        name: 'Vellum',
+        description: 'Soft, translucent, and ethereal. Adds a romantic, layered look to your suite.',
+        price: 0
+    },
+    {
+        id: 'paper' as InvitationType,
+        name: 'Cardstock',
+        description: 'Classic luxury. Available in various premium weights and textures.',
+        price: 0
+    }
+];
+
 const STEPS = [
     { id: 1, title: 'The Basics', description: 'Quantity & Type' },
     { id: 2, title: 'Materials', description: 'Finish & Shape' },
@@ -391,7 +412,7 @@ export default function CustomDesignPage() {
                 <div className="relative z-10 text-center space-y-2 p-4">
                     <h1 className="font-headline text-4xl md:text-5xl flex items-center justify-center gap-3">
                         <Sparkles className="h-8 w-8 text-primary" />
-                        Bespoke Design Suite
+                        Custom Order Suite
                     </h1>
                     <p className="text-lg text-muted-foreground max-w-xl mx-auto">
                         Craft your perfect invitation suite, step by step.

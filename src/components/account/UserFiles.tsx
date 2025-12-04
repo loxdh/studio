@@ -41,19 +41,32 @@ export default function UserFiles() {
             orderBy('createdAt', 'desc')
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const fetchedFiles = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            })) as UserFile[];
-            setFiles(fetchedFiles);
-            setIsLoading(false);
-        }, (error) => {
-            console.error("Error fetching files:", error);
-            setIsLoading(false);
-        });
+        let unsubscribe: () => void = () => { };
 
-        return () => unsubscribe();
+        try {
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                const fetchedFiles = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                })) as UserFile[];
+                setFiles(fetchedFiles);
+                setIsLoading(false);
+            }, (error) => {
+                console.error("Error fetching files:", error);
+                setIsLoading(false);
+            });
+        } catch (e) {
+            console.error("Failed to subscribe to files query:", e);
+            setIsLoading(false);
+        }
+
+        return () => {
+            try {
+                unsubscribe();
+            } catch (e) {
+                console.error("Failed to unsubscribe from files:", e);
+            }
+        };
     }, [user, firestore]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -12,10 +12,10 @@ export const QuoteEmail: React.FC<QuoteEmailProps> = ({
     details,
 }) => (
     <div style={{ fontFamily: 'sans-serif', color: '#333' }}>
-        <h1 style={{ color: '#000' }}>Your Custom Design Quote Saved!</h1>
+        <h1 style={{ color: '#000' }}>Your Custom Order Quote Saved!</h1>
         <p>Hi {customerName},</p>
         <p>
-            Thanks for starting your custom design journey with us. We've saved your quote
+            Thanks for starting your custom order journey with us. We've saved your quote
             (<strong>#{quoteId.slice(0, 8).toUpperCase()}</strong>) to your account.
         </p>
 
@@ -43,7 +43,7 @@ export const AdminQuoteEmail: React.FC<QuoteEmailProps> = ({
 }) => (
     <div style={{ fontFamily: 'sans-serif', color: '#333' }}>
         <h1 style={{ color: '#000' }}>New Quote Received</h1>
-        <p>A new custom design quote has been saved.</p>
+        <p>A new custom order quote has been saved.</p>
 
         <div style={{ border: '1px solid #eee', padding: '20px', borderRadius: '8px', margin: '20px 0' }}>
             <p><strong>Customer ID:</strong> {customerName}</p>
@@ -54,7 +54,7 @@ export const AdminQuoteEmail: React.FC<QuoteEmailProps> = ({
             <p><strong>Est. Total:</strong> ${details.estimatedTotal?.toFixed(2) || 'N/A'}</p>
         </div>
 
-        <a href={`http://localhost:9002/admin/quotes/${quoteId}`} style={{ display: 'inline-block', background: '#000', color: '#fff', padding: '10px 20px', textDecoration: 'none', borderRadius: '4px' }}>
+        <a href={`http://localhost:3000/admin/quotes/${quoteId}`} style={{ display: 'inline-block', background: '#000', color: '#fff', padding: '10px 20px', textDecoration: 'none', borderRadius: '4px' }}>
             View in Admin Panel
         </a>
     </div>

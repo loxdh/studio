@@ -20,6 +20,8 @@ export function MediaLibrary({ onSelect }: { onSelect: (url: string) => void }) 
       if (!file) return;
 
       try {
+        if (!storage || !firestore) throw new Error("Firebase services not initialized");
+
         const storageRef = ref(storage, `media/${Date.now()}_${file.name}`);
         const uploadResult = await uploadBytes(storageRef, file);
         const downloadURL = await getDownloadURL(uploadResult.ref);
@@ -46,9 +48,8 @@ export function MediaLibrary({ onSelect }: { onSelect: (url: string) => void }) 
     <div>
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer ${
-          isDragActive ? 'border-primary' : 'border-border'
-        }`}
+        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer ${isDragActive ? 'border-primary' : 'border-border'
+          }`}
       >
         <input {...getInputProps()} />
         {isUploading ? (

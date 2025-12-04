@@ -18,7 +18,7 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { QUANTITY_OPTIONS } from '@/lib/pricing-data';
 
-export default function CartSheet() {
+export default function CartSheet({ onClose }: { onClose?: () => void }) {
   const { cartItems, cartTotal, updateQuantity, removeFromCart } = useCart();
 
   return (
@@ -143,7 +143,7 @@ export default function CartSheet() {
               </div>
 
               <Button className="w-full h-12 text-base rounded-full shadow-md hover:shadow-lg transition-all" size="lg" asChild>
-                <Link href="/checkout" className="flex items-center justify-center gap-2">
+                <Link href="/checkout" className="flex items-center justify-center gap-2" onClick={onClose}>
                   Proceed to Checkout <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>

@@ -25,23 +25,27 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const syncWishlist = async () => {
             if (user && firestore) {
-                const docRef = doc(firestore, 'users', user.uid);
-                const docSnap = await getDoc(docRef);
+                try {
+                    const docRef = doc(firestore, 'users', user.uid);
+                    const docSnap = await getDoc(docRef);
 
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data.wishlist) {
-                        // Merge local and remote? For now, let's prioritize remote if it exists, or merge unique.
-                        // Let's just set it to remote for simplicity, or merge if local has items.
-                        // Merging logic:
-                        const remoteWishlist = data.wishlist as Product[];
-                        setWishlistItems((prev) => {
-                            const combined = [...prev, ...remoteWishlist];
-                            // Deduplicate by ID
-                            const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
-                            return unique;
-                        });
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if (data.wishlist) {
+                            // Merge local and remote? For now, let's prioritize remote if it exists, or merge unique.
+                            // Let's just set it to remote for simplicity, or merge if local has items.
+                            // Merging logic:
+                            const remoteWishlist = data.wishlist as Product[];
+                            setWishlistItems((prev) => {
+                                const combined = [...prev, ...remoteWishlist];
+                                // Deduplicate by ID
+                                const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
+                                return unique;
+                            });
+                        }
                     }
+                } catch (error) {
+                    console.error("Failed to sync wishlist with Firestore:", error);
                 }
             }
         };
@@ -71,9 +75,13 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         });
 
         if (user && firestore) {
-            const docRef = doc(firestore, 'users', user.uid);
-            // Ensure document exists
-            await setDoc(docRef, { wishlist: newItems }, { merge: true });
+            try {
+                const docRef = doc(firestore, 'users', user.uid);
+                // Ensure document exists
+                await setDoc(docRef, { wishlist: newItems }, { merge: true });
+            } catch (error) {
+                console.error("Failed to update wishlist in Firestore:", error);
+            }
         }
     };
 
@@ -87,8 +95,12 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         });
 
         if (user && firestore) {
-            const docRef = doc(firestore, 'users', user.uid);
-            await updateDoc(docRef, { wishlist: newItems });
+            try {
+                const docRef = doc(firestore, 'users', user.uid);
+                await updateDoc(docRef, { wishlist: newItems });
+            } catch (error) {
+                console.error("Failed to remove item from wishlist in Firestore:", error);
+            }
         }
     };
 

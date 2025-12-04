@@ -9,7 +9,8 @@ import {
   BookHeart,
   ShoppingBag,
   List,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Users
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +22,7 @@ const navItems = [
   { href: '/admin/categories', icon: List, label: 'Categories' },
   { href: '/admin/media', icon: ImageIcon, label: 'Media Library' },
   { href: '/admin/blog', icon: FileText, label: 'Blog Manager' },
+  { href: '/admin/subscribers', icon: Users, label: 'Subscribers' },
 ];
 
 export default function AdminSidebar() {

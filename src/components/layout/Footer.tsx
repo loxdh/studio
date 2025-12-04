@@ -1,9 +1,51 @@
-import { BookHeart, Twitter, Instagram, Facebook, Mail, MapPin, Phone, ArrowRight } from 'lucide-react';
+'use client';
+
+import { BookHeart, Twitter, Instagram, Facebook, Mail, MapPin, Phone, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { useState } from 'react';
+import { useFirestore } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 const Footer = () => {
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !email.includes('@')) return;
+
+    setIsLoading(true);
+    try {
+      if (firestore) {
+        await addDoc(collection(firestore, 'subscribers'), {
+          email,
+          createdAt: serverTimestamp(),
+          source: 'footer',
+        });
+
+        toast({
+          title: "Subscribed!",
+          description: "Thank you for joining our newsletter.",
+        });
+        setEmail('');
+      }
+    } catch (error) {
+      console.error('Subscription error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to subscribe. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <footer className="border-t bg-background pt-16 pb-8">
       <div className="container mx-auto px-4">
@@ -37,7 +79,7 @@ const Footer = () => {
             <h3 className="font-headline text-lg font-semibold mb-4">Explore</h3>
             <ul className="space-y-2">
               <li><Link href="/products" className="text-muted-foreground hover:text-primary transition-colors">Shop Collection</Link></li>
-              <li><Link href="/blog" className="text-muted-foreground hover:text-primary transition-colors">Our Journal</Link></li>
+              <li><Link href="/blog" className="text-muted-foreground hover:text-primary transition-colors">Blog</Link></li>
               <li><Link href="/about" className="text-muted-foreground hover:text-primary transition-colors">About Us</Link></li>
               <li><Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">Contact</Link></li>
             </ul>
@@ -66,13 +108,20 @@ const Footer = () => {
           <div>
             <h3 className="font-headline text-lg font-semibold mb-4">Stay Inspired</h3>
             <p className="text-muted-foreground mb-4">Subscribe to receive updates, access to exclusive deals, and more.</p>
-            <div className="flex gap-2">
-              <Input placeholder="Enter your email" className="bg-background" />
-              <Button size="icon">
-                <ArrowRight className="h-4 w-4" />
+            <form onSubmit={handleSubscribe} className="flex gap-2">
+              <Input
+                placeholder="Enter your email"
+                className="bg-background"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                type="email"
+              />
+              <Button size="icon" type="submit" disabled={isLoading}>
+                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
                 <span className="sr-only">Subscribe</span>
               </Button>
-            </div>
+            </form>
           </div>
         </div>
 
