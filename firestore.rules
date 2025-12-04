@@ -60,60 +60,49 @@ service cloud.firestore {
 
     /**
      * @description Controls access to the products collection.
-     *   Products are publicly visible to all users, but only admins can
-     *   create, update, or delete them.
      */
     match /products/{productId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if true; // Temporarily allowed for Firebase Studio
-      allow update: if true; // Temporarily allowed for Firebase Studio
-      allow delete: if true; // Temporarily allowed for Firebase Studio
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     /**
      * @description Controls access to the categories collection.
-     *   Categories are publicly visible, allowing users to browse products by
-     *   category, but only admins can manage the category list.
      */
     match /categories/{categoryId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if true; // Temporarily allowed for Firebase Studio
-      allow update: if true; // Temporarily allowed for Firebase Studio
-      allow delete: if true; // Temporarily allowed for Firebase Studio
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     /**
-     * @description Controls access to the blog articles collection.
-     *   Blog articles are public content for all site visitors. Write access
-     *   is restricted to admins for content management.
+     * @description Controls access to the blog posts collection.
      */
-    match /blog_articles/{blogArticleId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if true; // Temporarily allowed for Firebase Studio
-      allow update: if true; // Temporarily allowed for Firebase Studio
-      allow delete: if true; // Temporarily allowed for Firebase Studio
+    match /blog_posts/{postId} {
+        allow read: if true;
+        allow write: if isAdmin();
+    }
+
+    /**
+     * @description Controls access to the media collection.
+     */
+    match /media/{mediaId} {
+        allow read: if true;
+        allow write: if isAdmin();
     }
 
     /**
      * @description Secures the admin role management collection.
-     *   This collection is the source of truth for admin privileges. Only
-     *   existing admins are allowed to see who the other admins are or to
-     *   grant/revoke admin status.
      */
     match /roles_admin/{userId} {
-      allow get: if true; // Temporarily allowed
-      allow list: if true; // Temporarily allowed
-      allow create: if true; // Temporarily allowed
-      allow update: if true; // Temporarily allowed
-      allow delete: if true; // Temporarily allowed
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin() && isExistingDoc();
+      allow delete: if isAdmin() && isExistingDoc();
     }
 
     /**
      * @description Controls access to the users collection.
-     *   Users can read and write their own user document.
      */
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
@@ -121,18 +110,15 @@ service cloud.firestore {
 
     /**
      * @description Controls access to the quotes collection.
-     *   Users can create quotes and read their own.
-     *   Admins can read all quotes.
      */
     match /quotes/{quoteId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow read: if true; // Temporarily allowed for admin view
-      allow update, delete: if true; // Temporarily allowed for admin view
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
     /**
      * @description Controls access to the files subcollection.
-     *   Users can read and write their own files metadata.
      */
     match /users/{userId}/files/{fileId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
@@ -140,19 +126,15 @@ service cloud.firestore {
 
     /**
      * @description Controls access to the orders collection.
-     *   Users can create orders and read their own orders.
-     *   Admins can read/write all orders.
      */
     match /orders/{orderId} {
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow read: if true; // Temporarily allowed for admin view
-      allow list: if true; // Temporarily allowed for admin view
-      allow update, delete: if true; // Temporarily allowed for admin view
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow update, delete: if isAdmin();
     }
 
     /**
      * @description Controls access to the reviews collection.
-     *   Reviews are publicly readable. Authenticated users can create reviews.
      */
     match /reviews/{reviewId} {
       allow read, list: if true;

@@ -1,6 +1,6 @@
 'use client';
 
-import MediaLibrary from '@/components/admin/MediaLibrary';
+import { MediaLibrary } from '@/components/admin/MediaLibrary';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function AdminMediaPage() {
@@ -12,7 +12,7 @@ export default function AdminMediaPage() {
                     <CardTitle>Manage Images</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <MediaLibrary />
+                    <MediaLibrary onSelect={() => {}} />
                 </CardContent>
             </Card>
         </div>

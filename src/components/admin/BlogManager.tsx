@@ -1,158 +1,101 @@
+
 'use client';
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { useRouter } from 'next/navigation';
-
-import { Button } from '@/components/ui/button';
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { generateBlogContent } from '@/ai/flows/generate-blog-content';
-import { Skeleton } from '../ui/skeleton';
-import { useFirestore } from '@/firebase';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { useToast } from '@/hooks/use-toast';
-
-const formSchema = z.object({
-  title: z.string().min(10, 'Title must be at least 10 characters long.'),
-});
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { useCollection, useFirestore, useMemoFirebase, deleteDocumentNonBlocking } from '@/firebase';
+import type { BlogPost } from '@/lib/blog'; // Assuming you have a type for blog posts
+import { collection, doc, query, orderBy } from 'firebase/firestore';
+import { Button } from '../ui/button';
+import Link from 'next/link';
+import { PlusCircle, Edit, Trash2 } from 'lucide-react';
+import { format } from 'date-fns';
 
 export default function BlogManager() {
-  const [generatedContent, setGeneratedContent] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-
   const firestore = useFirestore();
-  const { toast } = useToast();
-  const router = useRouter();
+  const postsCollection = useMemoFirebase(
+    () => collection(firestore, 'blog_posts'),
+    [firestore]
+  );
+  const postsQuery = useMemoFirebase(
+    () => (postsCollection ? query(postsCollection, orderBy('createdAt', 'desc')) : null),
+    [postsCollection]
+  );
+  const { data: posts, isLoading } = useCollection<BlogPost>(postsQuery);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: '',
-    },
-  });
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsLoading(true);
-    setGeneratedContent('');
-    try {
-      const result = await generateBlogContent({ title: values.title });
-      setGeneratedContent(result.content);
-    } catch (error) {
-      console.error('Error generating content:', error);
-      setGeneratedContent('<p class="text-destructive">Failed to generate content. Please try again.</p>');
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handleSave() {
-    if (!generatedContent || !form.getValues().title) return;
-
-    setIsSaving(true);
-    try {
-      const title = form.getValues().title;
-      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-
-      await addDoc(collection(firestore, 'posts'), {
-        title,
-        slug,
-        content: generatedContent,
-        createdAt: serverTimestamp(),
-        published: true
-      });
-
-      toast({
-        title: "Success",
-        description: "Blog post saved successfully."
-      });
-
-      form.reset();
-      setGeneratedContent('');
-      router.push('/blog'); // Redirect to blog page to see the new post
-
-    } catch (error) {
-      console.error("Error saving post:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save blog post.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSaving(false);
-    }
+  if (isLoading) {
+    return <div>Loading posts...</div>;
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Generate New Post</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              <FormField
-                control={form.control}
-                name="title"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Blog Post Title</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g., The Art of the Perfect Wedding Invitation"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Generating...' : 'Generate Content'}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Generated Content</CardTitle>
-          {generatedContent && (
-            <Button onClick={handleSave} disabled={isSaving} variant="outline" size="sm">
-              {isSaving ? 'Saving...' : 'Save Post'}
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/30 p-4 rounded-md min-h-[200px]">
-            {isLoading ? (
-              <div className='space-y-2'>
-                <Skeleton className="h-4 w-4/5" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-              </div>
-            ) : generatedContent ? (
-              <div dangerouslySetInnerHTML={{ __html: generatedContent }} />
-            ) : (
-              <p className='text-muted-foreground'>Your generated blog post will appear here.</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <>
+      <div className="flex justify-end mb-4">
+        <Button asChild>
+          <Link href="/admin/blog/add">
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add New Post
+          </Link>
+        </Button>
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Title</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="hidden md:table-cell">Created At</TableHead>
+            <TableHead>
+              <span className="sr-only">Actions</span>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {posts?.map((post) => (
+            <TableRow key={post.id}>
+              <TableCell className="font-medium">{post.title}</TableCell>
+              <TableCell>
+                <Badge variant={post.published ? 'default' : 'outline'}>
+                  {post.published ? 'Published' : 'Draft'}
+                </Badge>
+              </TableCell>
+              <TableCell className="hidden md:table-cell">
+                {post.createdAt ? format(post.createdAt.toDate(), 'PPP') : ''}
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="icon" asChild>
+                    <Link href={`/admin/blog/edit/${post.id}`}>
+                      <Edit className="h-4 w-4" />
+                      <span className="sr-only">Edit</span>
+                    </Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive/90"
+                    onClick={() => {
+                      if (confirm('Are you sure you want to delete this post?')) {
+                        if (firestore) {
+                          deleteDocumentNonBlocking(doc(firestore, 'blog_posts', post.id));
+                        }
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete</span>
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </>
   );
 }
