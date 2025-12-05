@@ -401,8 +401,10 @@ export default function ProductDetailClient({
                 <AccordionTrigger className="text-lg font-medium">FAQ</AccordionTrigger>
                 <AccordionContent>
                   <div className="text-muted-foreground space-y-3 leading-relaxed">
-                    <p><strong>Can I customize the colors?</strong><br />Yes! Most of our designs can be customized to match your wedding palette.</p>
-                    <p><strong>Do you offer samples?</strong><br />Absolutely. We recommend ordering a sample pack to see and feel the quality of our paper and printing.</p>
+                    <p><strong>Can I customize the colors?</strong><br />Yes! Most of our designs can be customized to match your wedding palette. We offer a wide range of foil and ink colors.</p>
+                    <p><strong>What is the turnaround time?</strong><br />For custom orders, the process typically takes 4-6 weeks from design to delivery. Rush options are available.</p>
+                    <p><strong>Do you ship internationally?</strong><br />Yes, we ship worldwide via UPS and DHL Express to ensure your stationery arrives safely and on time.</p>
+                    <p><strong>Can I order extra envelopes?</strong><br />Yes, we recommend ordering 10-15 extra envelopes for varied needs.</p>
                   </div>
                 </AccordionContent>
               </AccordionItem>

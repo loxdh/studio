@@ -168,7 +168,7 @@ const Navigation = () => {
               </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                  <Link href="/custom-design">Custom Order</Link>
+                  <Link href="/custom-order">Custom Order</Link>
                 </NavigationMenuLink>
               </NavigationMenuItem>
               <NavigationMenuItem>
@@ -250,7 +250,7 @@ const Navigation = () => {
                 </AccordionItem>
               </Accordion>
 
-              <Link href="/custom-design" className="py-2" onClick={() => setMobileMenuOpen(false)}>Custom Order</Link>
+              <Link href="/custom-order" className="py-2" onClick={() => setMobileMenuOpen(false)}>Custom Order</Link>
               <Link href="/blog" className="py-2" onClick={() => setMobileMenuOpen(false)}>Blog</Link>
               <Link href="/contact" className="py-2" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
               <Link href="/account" className="py-2" onClick={() => setMobileMenuOpen(false)}>My Account</Link>

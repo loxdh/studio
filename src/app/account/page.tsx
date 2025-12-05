@@ -507,10 +507,10 @@ export default function AccountPage() {
                                                         ))}
                                                     </div>
                                                     <div className="flex justify-end gap-2">
-                                                        <Button variant="outline" size="sm" onClick={() => router.push('/custom-design')}>
+                                                        <Button variant="outline" size="sm" onClick={() => router.push('/custom-order')}>
                                                             Edit Design
                                                         </Button>
-                                                        <Button size="sm" onClick={() => router.push('/custom-design')}>
+                                                        <Button size="sm" onClick={() => router.push('/custom-order')}>
                                                             Order Now
                                                         </Button>
                                                     </div>
@@ -524,7 +524,7 @@ export default function AccountPage() {
                                             </div>
                                             <h3 className="text-lg font-semibold mb-2">No saved quotes</h3>
                                             <p className="text-muted-foreground mb-6 max-w-sm mx-auto">You haven't saved any custom orders yet. Use our custom designer to create your dream stationery.</p>
-                                            <Button onClick={() => router.push('/custom-design')}>Create Custom Order</Button>
+                                            <Button onClick={() => router.push('/custom-order')}>Create Custom Order</Button>
                                         </div>
                                     )}
                                 </CardContent>

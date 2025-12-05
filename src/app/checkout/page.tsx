@@ -4,6 +4,7 @@ import { useCart } from '@/hooks/useCart';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useForm } from 'react-hook-form';
@@ -34,7 +35,9 @@ const checkoutSchema = z.object({
     address: z.string().min(5, 'Address is required'),
     city: z.string().min(2, 'City is required'),
     zipCode: z.string().min(5, 'Valid Zip Code is required'),
-    // Removed card details as Stripe handles them
+    shippingMethod: z.enum(['ups', 'dhl'], {
+        required_error: "You need to select a shipping method.",
+    }),
 });
 
 export default function CheckoutPage() {
@@ -52,7 +55,9 @@ export default function CheckoutPage() {
             email: user?.email || '',
             address: '',
             city: '',
+            city: '',
             zipCode: '',
+            shippingMethod: 'ups',
         },
     });
 
@@ -80,7 +85,9 @@ export default function CheckoutPage() {
                     email: values.email,
                     address: values.address,
                     city: values.city,
-                    zipCode: values.zipCode
+                    city: values.city,
+                    zipCode: values.zipCode,
+                    shippingMethod: values.shippingMethod
                 },
                 createdAt: serverTimestamp()
             });
@@ -239,6 +246,42 @@ export default function CheckoutPage() {
                                             )}
                                         />
                                     </div>
+
+                                    {/* Shipping Method */}
+                                    <FormField
+                                        control={form.control}
+                                        name="shippingMethod"
+                                        render={({ field }) => (
+                                            <FormItem className="space-y-3">
+                                                <FormLabel>Shipping Method</FormLabel>
+                                                <FormControl>
+                                                    <RadioGroup
+                                                        onValueChange={field.onChange}
+                                                        defaultValue={field.value}
+                                                        className="flex flex-col space-y-1"
+                                                    >
+                                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                                            <FormControl>
+                                                                <RadioGroupItem value="ups" />
+                                                            </FormControl>
+                                                            <FormLabel className="font-normal">
+                                                                UPS Worldwide ($15.00)
+                                                            </FormLabel>
+                                                        </FormItem>
+                                                        <FormItem className="flex items-center space-x-3 space-y-0">
+                                                            <FormControl>
+                                                                <RadioGroupItem value="dhl" />
+                                                            </FormControl>
+                                                            <FormLabel className="font-normal">
+                                                                DHL Express ($25.00)
+                                                            </FormLabel>
+                                                        </FormItem>
+                                                    </RadioGroup>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
                                     <Separator className="my-4" />
 

@@ -50,7 +50,7 @@ export default function Home() {
               <Link href="/products">Shop Collection</Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="text-lg px-10 py-7 rounded-full backdrop-blur-md bg-background/30 border-primary/20 hover:bg-background/50 transition-all duration-300">
-              <Link href="/custom-design">Custom Order</Link>
+              <Link href="/custom-order">Custom Order</Link>
             </Button>
           </div>
         </div>

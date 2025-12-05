@@ -1,7 +1,7 @@
 'use client';
 
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, query, where, orderBy } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit } from 'firebase/firestore';
 import StarRating from './StarRating';
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -21,7 +21,7 @@ interface ReviewListProps {
 export default function ReviewList({ productId }: ReviewListProps) {
     const firestore = useFirestore();
 
-    const reviewsQuery = useMemoFirebase(() => {
+    const productReviewsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         return query(
             collection(firestore, 'reviews'),
@@ -30,11 +30,27 @@ export default function ReviewList({ productId }: ReviewListProps) {
         );
     }, [firestore, productId]);
 
-    const { data: reviews, isLoading } = useCollection<Review>(reviewsQuery);
+    const generalReviewsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(
+            collection(firestore, 'reviews'),
+            where('rating', '>=', 5),
+            orderBy('rating', 'desc'),
+            orderBy('createdAt', 'desc'),
+            limit(3)
+        );
+    }, [firestore]);
 
-    if (isLoading) return <p>Loading reviews...</p>;
+    const { data: productReviews, isLoading: isLoadingProduct } = useCollection<Review>(productReviewsQuery);
+    const { data: generalReviews, isLoading: isLoadingGeneral } = useCollection<Review>(generalReviewsQuery);
 
-    if (!reviews || reviews.length === 0) {
+    if (isLoadingProduct || isLoadingGeneral) return <p>Loading reviews...</p>;
+
+    const hasProductReviews = productReviews && productReviews.length > 0;
+    const displayReviews = hasProductReviews ? productReviews : (generalReviews || []);
+    const isShowingGeneral = !hasProductReviews && displayReviews.length > 0;
+
+    if (!displayReviews || displayReviews.length === 0) {
         return (
             <div className="text-center py-8 text-muted-foreground">
                 No reviews yet. Be the first to review this product!
@@ -44,7 +60,12 @@ export default function ReviewList({ productId }: ReviewListProps) {
 
     return (
         <div className="space-y-6">
-            {reviews.map((review) => (
+            {isShowingGeneral && (
+                <p className="text-sm text-muted-foreground italic mb-4">
+                    Here are some recent 5-star reviews from our happy couples:
+                </p>
+            )}
+            {displayReviews.map((review) => (
                 <div key={review.id} className="flex gap-4 border-b pb-6 last:border-0">
                     <Avatar>
                         <AvatarFallback>{review.userName.charAt(0).toUpperCase()}</AvatarFallback>

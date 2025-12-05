@@ -24,11 +24,12 @@ import { Save } from 'lucide-react';
 // --- Constants & Data ---
 
 import {
-    SHAPES, ACRYLIC_OPTIONS, VELLUM_OPTIONS, PAPER_OPTIONS, PRINT_COLORS,
+    SHAPES, ACRYLIC_OPTIONS, ACRYLIC_COLORS, VELLUM_OPTIONS, PAPER_OPTIONS, PRINT_COLORS, ADDITIONAL_FOIL_COLOR_PRICE,
     SUITE_INSERTS_FOIL, SUITE_INSERTS_DIGITAL, SERVICE_ADD_ONS,
     ENVELOPE_MATERIALS, ENVELOPE_COLORS, ENVELOPE_EMBELLISHMENTS, ENVELOPE_LINERS, ENVELOPE_SEALS, ENVELOPE_ADDRESSING,
     POCKET_MATERIALS, POCKET_COLORS, POCKET_EMBELLISHMENTS,
-    FOLIO_STYLES, FOLIO_MATERIALS, FOLIO_EMBELLISHMENTS,
+    FOLIO_STYLES, FOLIO_MATERIALS, FOLIO_EMBELLISHMENTS, FOLIO_EMBELLISHMENTS_BY_STYLE,
+    COLORS_BY_MATERIAL,
     calculateItemPrice, PricingOption
 } from '@/lib/pricing-data';
 
@@ -81,10 +82,12 @@ export default function CustomDesignPage() {
     const [shape, setShape] = useState(SHAPES[0]);
 
     const [acrylicOption, setAcrylicOption] = useState(ACRYLIC_OPTIONS[1]);
+    const [acrylicColor, setAcrylicColor] = useState(ACRYLIC_COLORS[0]);
     const [vellumOption, setVellumOption] = useState(VELLUM_OPTIONS[0]);
     const [paperOption, setPaperOption] = useState(PAPER_OPTIONS[0]);
 
-    const [printColor, setPrintColor] = useState(PRINT_COLORS[0]);
+    const [printColor, setPrintColor] = useState<PricingOption | null>(null);
+    const [additionalFoilColors, setAdditionalFoilColors] = useState(0);
 
     // Envelope State
     const [includeEnvelopes, setIncludeEnvelopes] = useState(false);
@@ -108,61 +111,40 @@ export default function CustomDesignPage() {
     const [folioColor, setFolioColor] = useState(POCKET_COLORS[0]);
     const [selectedFolioEmbellishments, setSelectedFolioEmbellishments] = useState<string[]>([]);
 
-    const [insertPrintType, setInsertPrintType] = useState<'foil' | 'digital'>('digital');
     const [selectedInserts, setSelectedInserts] = useState<string[]>([]);
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
     const [designNotes, setDesignNotes] = useState('');
 
     const [total, setTotal] = useState(0);
-
-    // Calculate Total
     // Calculate Total
     useEffect(() => {
         let calculatedTotal = 0;
 
-        const addPrice = (option: PricingOption) => {
-            const price = calculateItemPrice(option, quantity);
-            if (option.type === 'flat') {
+        const addPrice = (item: PricingOption) => {
+            const price = calculateItemPrice(item, quantity);
+            if (item.type === 'flat') {
                 calculatedTotal += price;
             } else {
                 calculatedTotal += price * quantity;
             }
+            // Add base fee if present
+            if (item.baseFee) {
+                calculatedTotal += item.baseFee;
+            }
         };
 
         // 1. Base Unit Price (Shape + Material + Print)
-        addPrice(printColor);
+        if (printColor) addPrice(printColor);
         if (shape.type !== 'flat') addPrice(shape);
-        else calculatedTotal += shape.price; // Handle flat shape separately if needed, though addPrice covers it if type is set correctly
+        else calculatedTotal += shape.price;
 
-        if (invitationType === 'acrylic') addPrice(acrylicOption);
+        if (invitationType === 'acrylic') {
+            addPrice(acrylicOption);
+            addPrice(acrylicColor);
+        }
         if (invitationType === 'vellum') addPrice(vellumOption);
         if (invitationType === 'paper') addPrice(paperOption);
 
-        // 2. Envelopes
-        if (includeEnvelopes) {
-            addPrice(envMaterial);
-            addPrice(envColor);
-
-            selectedEmbellishments.forEach(id => {
-                const opt = ENVELOPE_EMBELLISHMENTS.find(o => o.id === id);
-                if (opt) addPrice(opt);
-            });
-
-            if (selectedLiner) {
-                const opt = ENVELOPE_LINERS.find(o => o.id === selectedLiner);
-                if (opt) addPrice(opt);
-            }
-
-            selectedSeals.forEach(id => {
-                const opt = ENVELOPE_SEALS.find(o => o.id === id);
-                if (opt) addPrice(opt);
-            });
-
-            selectedAddressing.forEach(id => {
-                const opt = ENVELOPE_ADDRESSING.find(o => o.id === id);
-                if (opt) addPrice(opt);
-            });
-        }
 
         // 3. Pockets
         if (includePockets) {
@@ -187,9 +169,9 @@ export default function CustomDesignPage() {
         }
 
         // 5. Inserts
-        const currentInsertList = insertPrintType === 'foil' ? SUITE_INSERTS_FOIL : SUITE_INSERTS_DIGITAL;
+        const allInserts = [...SUITE_INSERTS_DIGITAL, ...SUITE_INSERTS_FOIL];
         selectedInserts.forEach(id => {
-            const option = currentInsertList.find(o => o.id === id);
+            const option = allInserts.find(o => o.id === id);
             if (option) {
                 addPrice(option);
             }
@@ -199,7 +181,11 @@ export default function CustomDesignPage() {
         selectedServices.forEach(id => {
             const service = SERVICE_ADD_ONS.find(s => s.id === id);
             if (service) {
-                addPrice(service);
+                if (service.id === 'rush' && includeFolios) {
+                    addPrice({ ...service, price: service.price * 2 });
+                } else {
+                    addPrice(service);
+                }
             }
         });
 
@@ -209,7 +195,7 @@ export default function CustomDesignPage() {
         includeEnvelopes, envMaterial, envColor, selectedEmbellishments, selectedLiner, selectedSeals, selectedAddressing,
         includePockets, pocketMaterial, pocketColor, selectedPocketEmbellishments,
         includeFolios, folioStyle, folioMaterial, folioColor, selectedFolioEmbellishments,
-        insertPrintType, selectedInserts, selectedServices
+        selectedInserts, selectedServices
     ]);
 
     const toggleSelection = (id: string, currentList: string[], setList: (l: string[]) => void) => {
@@ -218,6 +204,12 @@ export default function CustomDesignPage() {
         } else {
             setList([...currentList, id]);
         }
+    };
+
+    const getRowPrice = (item: PricingOption) => {
+        const uPrice = calculateItemPrice(item, quantity);
+        const base = item.type === 'flat' ? uPrice : uPrice * quantity;
+        return base + (item.baseFee || 0);
     };
 
     const handleNext = () => {
@@ -262,9 +254,11 @@ export default function CustomDesignPage() {
                     material: {
                         type: invitationType,
                         details: materialDetails,
-                        optionId: invitationType === 'acrylic' ? acrylicOption.id : invitationType === 'vellum' ? vellumOption.id : paperOption.id
+                        optionId: invitationType === 'acrylic' ? acrylicOption.id : invitationType === 'vellum' ? vellumOption.id : paperOption.id,
+                        colorId: invitationType === 'acrylic' ? acrylicColor.id : undefined
                     },
-                    printColor: printColor.id,
+                    printColor: printColor?.id || 'none',
+                    additionalFoilColors,
                     envelopes: {
                         included: includeEnvelopes,
                         material: envMaterial.id,
@@ -288,7 +282,6 @@ export default function CustomDesignPage() {
                         embellishments: selectedFolioEmbellishments
                     },
                     inserts: {
-                        printType: insertPrintType,
                         selected: selectedInserts
                     },
                     services: selectedServices,
@@ -306,9 +299,9 @@ export default function CustomDesignPage() {
                     'Folios': includeFolios ? `${folioStyle.name} - ${folioMaterial.name} (${folioColor.name})` : 'None',
                     'Inserts': selectedInserts.length > 0
                         ? `${selectedInserts.map(id => {
-                            const currentInsertList = insertPrintType === 'foil' ? SUITE_INSERTS_FOIL : SUITE_INSERTS_DIGITAL;
-                            return currentInsertList.find(o => o.id === id)?.name;
-                        }).filter(Boolean).join(', ')} (${insertPrintType === 'foil' ? 'Foil-Pressed' : 'Digital'})`
+                            const allInserts = [...SUITE_INSERTS_DIGITAL, ...SUITE_INSERTS_FOIL];
+                            return allInserts.find(o => o.id === id)?.name;
+                        }).filter(Boolean).join(', ')}`
                         : 'None',
                     'Services': selectedServices.map(id => SERVICE_ADD_ONS.find(o => o.id === id)?.name).join(', '),
                     'Notes': designNotes
@@ -380,17 +373,19 @@ export default function CustomDesignPage() {
             'Estimated Total': `$${total.toFixed(2)}`,
             'Quantity': quantity.toString(),
             'Type': invitationType.charAt(0).toUpperCase() + invitationType.slice(1),
+            'Acrylic Color': invitationType === 'acrylic' ? acrylicColor.name : undefined,
             'Shape': shape.name,
             'Material': materialDetails,
-            'Print/Foil': printColor.name,
+            'Print/Foil': printColor ? printColor.name : 'None',
+            'Additional Foils': additionalFoilColors > 0 ? `${additionalFoilColors} Color(s)` : undefined,
             'Envelopes': includeEnvelopes ? `${envMaterial.name} (${envColor.name})` : 'None',
             'Pockets': includePockets ? `${pocketMaterial.name} (${pocketColor.name})` : 'None',
             'Folios': includeFolios ? `${folioStyle.name} - ${folioMaterial.name} (${folioColor.name})` : 'None',
             'Inserts': selectedInserts.length > 0
                 ? `${selectedInserts.map(id => {
-                    const currentInsertList = insertPrintType === 'foil' ? SUITE_INSERTS_FOIL : SUITE_INSERTS_DIGITAL;
-                    return currentInsertList.find(o => o.id === id)?.name;
-                }).filter(Boolean).join(', ')} (${insertPrintType === 'foil' ? 'Foil-Pressed' : 'Digital'})`
+                    const allInserts = [...SUITE_INSERTS_DIGITAL, ...SUITE_INSERTS_FOIL];
+                    return allInserts.find(o => o.id === id)?.name;
+                }).filter(Boolean).join(', ')}`
                 : 'None',
             'Services': selectedServices.map(id => SERVICE_ADD_ONS.find(o => o.id === id)?.name).join(', '),
             'Notes': designNotes
@@ -472,16 +467,22 @@ export default function CustomDesignPage() {
                                                     <div
                                                         key={type.id}
                                                         className={cn(
-                                                            "cursor-pointer p-6 rounded-xl border-2 transition-all hover:shadow-md",
-                                                            invitationType === type.id ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:border-primary/50"
+                                                            "cursor-pointer p-6 rounded-xl border-2 transition-all hover:shadow-md relative overflow-hidden",
+                                                            invitationType === type.id ? "border-primary ring-1 ring-primary" : "border-border hover:border-primary/50",
+                                                            type.id === 'acrylic' && "bg-white/40 backdrop-blur-md border-white/50",
+                                                            type.id === 'vellum' && "bg-white/80 opacity-90",
+                                                            type.id === 'paper' && "bg-[#Fdfbf7]"
                                                         )}
                                                         onClick={() => setInvitationType(type.id)}
                                                     >
-                                                        <div className="flex justify-between items-start mb-3">
-                                                            <h3 className="font-bold text-lg">{type.name}</h3>
-                                                            {invitationType === type.id && <Check className="h-5 w-5 text-primary" />}
+                                                        {type.id === 'acrylic' && <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none" />}
+                                                        <div className="relative z-10">
+                                                            <div className="flex justify-between items-start mb-3">
+                                                                <h3 className="font-bold text-lg">{type.name}</h3>
+                                                                {invitationType === type.id && <Check className="h-5 w-5 text-primary" />}
+                                                            </div>
+                                                            <p className="text-sm text-muted-foreground leading-relaxed">{type.description}</p>
                                                         </div>
-                                                        <p className="text-sm text-muted-foreground leading-relaxed">{type.description}</p>
                                                     </div>
                                                 ))}
                                             </div>
@@ -504,15 +505,46 @@ export default function CustomDesignPage() {
                                                 {invitationType === 'paper' && 'Paper Finish & Weight'}
                                             </Label>
                                             <div className="grid grid-cols-1 gap-3">
-                                                {invitationType === 'acrylic' && ACRYLIC_OPTIONS.map((opt) => (
-                                                    <MaterialOptionRow
-                                                        key={opt.id}
-                                                        option={opt}
-                                                        selected={acrylicOption.id === opt.id}
-                                                        onSelect={() => setAcrylicOption(opt)}
-                                                        quantity={quantity}
-                                                    />
-                                                ))}
+                                                {invitationType === 'acrylic' && (
+                                                    <>
+                                                        {ACRYLIC_OPTIONS.map((opt) => (
+                                                            <MaterialOptionRow
+                                                                key={opt.id}
+                                                                option={opt}
+                                                                selected={acrylicOption.id === opt.id}
+                                                                onSelect={() => setAcrylicOption(opt)}
+                                                                quantity={quantity}
+                                                            />
+                                                        ))}
+
+                                                        <div className="mt-6 space-y-3">
+                                                            <Label className="text-base">Acrylic Color & Finish</Label>
+                                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                                                                {ACRYLIC_COLORS.map(c => (
+                                                                    <div
+                                                                        key={c.id}
+                                                                        className={cn(
+                                                                            "flex flex-col items-center gap-2 p-4 border rounded-lg cursor-pointer transition-all",
+                                                                            acrylicColor.id === c.id ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "hover:bg-muted/50 border-border"
+                                                                        )}
+                                                                        onClick={() => setAcrylicColor(c)}
+                                                                    >
+                                                                        <div className="w-10 h-10 rounded-full border shadow-sm relative overflow-hidden"
+                                                                            style={{ backgroundColor: c.hex }}>
+                                                                            {c.hex === '#FFFFFF' && <div className="absolute inset-0 border border-muted-foreground/10 rounded-full" />}
+                                                                        </div>
+                                                                        <div className="text-center">
+                                                                            <span className="text-sm font-medium block">{c.name}</span>
+                                                                            <span className="text-xs text-muted-foreground block">
+                                                                                {c.price > 0 ? `+$${c.price.toFixed(2)}/ea` : 'Base Price'}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    </>
+                                                )}
                                                 {invitationType === 'vellum' && VELLUM_OPTIONS.map((opt) => (
                                                     <MaterialOptionRow
                                                         key={opt.id}
@@ -608,78 +640,125 @@ export default function CustomDesignPage() {
                                                         <div className={cn(
                                                             "w-14 h-14 rounded-full shadow-sm transition-all relative",
                                                             c.bgClass,
-                                                            printColor.id === c.id ? "ring-4 ring-primary ring-offset-2 scale-110" : "group-hover:scale-105"
+                                                            printColor?.id === c.id ? "ring-4 ring-primary ring-offset-2 scale-110" : "group-hover:scale-105"
                                                         )}>
-                                                            {printColor.id === c.id && (
+                                                            {printColor?.id === c.id && (
                                                                 <div className="absolute inset-0 flex items-center justify-center">
                                                                     <Check className={cn("h-6 w-6 drop-shadow-md", c.textClass || "text-white")} />
                                                                 </div>
                                                             )}
                                                         </div>
                                                         <div className="text-center">
-                                                            <p className={cn("text-xs font-medium", printColor.id === c.id ? "text-primary" : "text-muted-foreground")}>{c.name}</p>
-                                                            <p className="text-[10px] text-muted-foreground">(${(c.price * quantity).toFixed(2)})</p>
+                                                            <p className={cn("text-xs font-medium", printColor?.id === c.id ? "text-primary" : "text-muted-foreground")}>{c.name}</p>
+                                                            {c.description && <p className="text-[9px] text-amber-600 font-medium leading-none mb-1">{c.description}</p>}
+                                                            <p className="text-[10px] text-muted-foreground">
+                                                                {c.type === 'flat' ? `$${calculateItemPrice(c, quantity).toFixed(0)} flat` : `$${(c.price * quantity).toFixed(2)}`}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 ))}
                                             </div>
+
+                                            {printColor && !['uv', 'blind_emboss'].includes(printColor.id) && (
+                                                <div className="bg-muted/10 p-4 rounded-lg border flex flex-row items-center justify-between animate-in fade-in slide-in-from-top-2">
+                                                    <div>
+                                                        <Label className="font-semibold">Additional Foil Colors</Label>
+                                                        <p className="text-sm text-muted-foreground">Add extra colors for ${ADDITIONAL_FOIL_COLOR_PRICE} ea.</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 bg-background p-1 rounded-md border">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setAdditionalFoilColors(Math.max(0, additionalFoilColors - 1))}>-</Button>
+                                                        <span className="w-8 text-center font-medium">{additionalFoilColors}</span>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setAdditionalFoilColors(additionalFoilColors + 1)}>+</Button>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
 
                                         <Separator />
 
                                         <div className="space-y-6">
                                             <Label className="text-base uppercase tracking-wide text-muted-foreground text-sm font-semibold">
-                                                Select {insertPrintType === 'foil' ? 'Foil-Pressed' : 'Digital'} Matching Inserts
+                                                Add Matching Inserts
                                             </Label>
 
-                                            <div className="bg-muted/30 p-4 rounded-lg border">
-                                                <Label className="mb-3 block text-sm font-medium text-muted-foreground">Insert Printing Method</Label>
-                                                <RadioGroup value={insertPrintType} onValueChange={(v: 'foil' | 'digital') => setInsertPrintType(v)} className="flex gap-6">
-                                                    <div className="flex items-center space-x-2">
-                                                        <RadioGroupItem value="digital" id="digital-insert" />
-                                                        <Label htmlFor="digital-insert">Digital Color Printing <span className="text-xs text-muted-foreground">(Standard)</span></Label>
-                                                    </div>
-                                                    <div className="flex items-center space-x-2">
-                                                        <RadioGroupItem value="foil" id="foil-insert" />
-                                                        <Label htmlFor="foil-insert">Foil-Pressed <span className="text-xs text-primary font-medium">(Premium)</span></Label>
-                                                    </div>
-                                                </RadioGroup>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                {(insertPrintType === 'foil' ? SUITE_INSERTS_FOIL : SUITE_INSERTS_DIGITAL).map((insert) => {
-                                                    return (
-                                                        <div key={insert.id}
-                                                            className={cn(
-                                                                "flex items-center space-x-3 p-4 border rounded-lg transition-colors cursor-pointer",
-                                                                selectedInserts.includes(insert.id) ? "bg-primary/5 border-primary" : "hover:bg-muted/50"
-                                                            )}
-                                                            onClick={() => toggleSelection(insert.id, selectedInserts, setSelectedInserts)}
-                                                        >
-                                                            <Checkbox
-                                                                id={`insert-${insert.id}`}
-                                                                checked={selectedInserts.includes(insert.id)}
-                                                                onCheckedChange={() => toggleSelection(insert.id, selectedInserts, setSelectedInserts)}
-                                                            />
-                                                            <div className="flex-1">
-                                                                <Label htmlFor={`insert-${insert.id}`} className="font-medium cursor-pointer">
-                                                                    {insert.name}
-                                                                </Label>
-                                                                {insert.description && (
-                                                                    <p className="text-xs text-muted-foreground mt-0.5">{insert.description}</p>
+                                            <div className="space-y-6">
+                                                {/* Digital Section */}
+                                                <div>
+                                                    <Label className="text-sm font-semibold mb-3 block">Digital Color Printing <span className="text-xs font-normal text-muted-foreground">(Standard)</span></Label>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                        {SUITE_INSERTS_DIGITAL.map((insert) => (
+                                                            <div key={insert.id}
+                                                                className={cn(
+                                                                    "flex items-center space-x-3 p-4 border rounded-lg transition-colors cursor-pointer",
+                                                                    selectedInserts.includes(insert.id) ? "bg-primary/5 border-primary" : "hover:bg-muted/50"
                                                                 )}
+                                                                onClick={() => toggleSelection(insert.id, selectedInserts, setSelectedInserts)}
+                                                            >
+                                                                <Checkbox
+                                                                    id={`insert-${insert.id}`}
+                                                                    checked={selectedInserts.includes(insert.id)}
+                                                                    onCheckedChange={() => toggleSelection(insert.id, selectedInserts, setSelectedInserts)}
+                                                                />
+                                                                <div className="flex-1">
+                                                                    <Label htmlFor={`insert-${insert.id}`} className="font-medium cursor-pointer">
+                                                                        {insert.name}
+                                                                    </Label>
+                                                                    {insert.description && (
+                                                                        <p className="text-xs text-muted-foreground mt-0.5">{insert.description}</p>
+                                                                    )}
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <span className="text-sm font-medium block">
+                                                                        ${((insert.type === 'per_unit' ? insert.price * quantity : insert.price) + (insert.baseFee || 0)).toFixed(2)}
+                                                                    </span>
+                                                                    <span className="text-[10px] text-muted-foreground">
+                                                                        (for {quantity} pcs)
+                                                                    </span>
+                                                                </div>
                                                             </div>
-                                                            <div className="text-right">
-                                                                <span className="text-sm font-medium block">
-                                                                    ${insert.price.toFixed(2)}
-                                                                </span>
-                                                                <span className="text-[10px] text-muted-foreground">
-                                                                    (per set of {quantity})
-                                                                </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <Separator />
+
+                                                {/* Foil Section */}
+                                                <div>
+                                                    <Label className="text-sm font-semibold mb-3 block">Foil-Pressed <span className="text-xs font-normal text-primary">(Premium)</span></Label>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                        {SUITE_INSERTS_FOIL.map((insert) => (
+                                                            <div key={insert.id}
+                                                                className={cn(
+                                                                    "flex items-center space-x-3 p-4 border rounded-lg transition-colors cursor-pointer",
+                                                                    selectedInserts.includes(insert.id) ? "bg-primary/5 border-primary" : "hover:bg-muted/50"
+                                                                )}
+                                                                onClick={() => toggleSelection(insert.id, selectedInserts, setSelectedInserts)}
+                                                            >
+                                                                <Checkbox
+                                                                    id={`insert-${insert.id}`}
+                                                                    checked={selectedInserts.includes(insert.id)}
+                                                                    onCheckedChange={() => toggleSelection(insert.id, selectedInserts, setSelectedInserts)}
+                                                                />
+                                                                <div className="flex-1">
+                                                                    <Label htmlFor={`insert-${insert.id}`} className="font-medium cursor-pointer">
+                                                                        {insert.name}
+                                                                    </Label>
+                                                                    {insert.description && (
+                                                                        <p className="text-xs text-muted-foreground mt-0.5">{insert.description}</p>
+                                                                    )}
+                                                                </div>
+                                                                <div className="text-right">
+                                                                    <span className="text-sm font-medium block">
+                                                                        ${((insert.type === 'per_unit' ? insert.price * quantity : insert.price) + (insert.baseFee || 0)).toFixed(2)}
+                                                                    </span>
+                                                                    <span className="text-[10px] text-muted-foreground">
+                                                                        (for {quantity} pcs)
+                                                                    </span>
+                                                                </div>
                                                             </div>
-                                                        </div>
-                                                    );
-                                                })}
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -721,7 +800,13 @@ export default function CustomDesignPage() {
                                                     {/* Material */}
                                                     <div className="space-y-3">
                                                         <Label className="text-base">Choose Envelope Material</Label>
-                                                        <Select value={envMaterial.id} onValueChange={(val) => setEnvMaterial(ENVELOPE_MATERIALS.find(m => m.id === val) || ENVELOPE_MATERIALS[0])}>
+                                                        <Select value={envMaterial.id} onValueChange={(val) => {
+                                                            const mat = ENVELOPE_MATERIALS.find(m => m.id === val) || ENVELOPE_MATERIALS[0];
+                                                            setEnvMaterial(mat);
+                                                            // Reset color to first available for this material
+                                                            const availableColors = COLORS_BY_MATERIAL[mat.id] || COLORS_BY_MATERIAL.matte;
+                                                            setEnvColor(availableColors[0]);
+                                                        }}>
                                                             <SelectTrigger className="w-full h-12">
                                                                 <SelectValue />
                                                             </SelectTrigger>
@@ -739,7 +824,7 @@ export default function CustomDesignPage() {
                                                     <div className="space-y-3">
                                                         <Label className="text-base">Choose Envelope Color</Label>
                                                         <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
-                                                            {ENVELOPE_COLORS.map(c => (
+                                                            {(COLORS_BY_MATERIAL[envMaterial.id] || COLORS_BY_MATERIAL.matte).map(c => (
                                                                 <div
                                                                     key={c.id}
                                                                     className="flex flex-col items-center gap-2 cursor-pointer group"
@@ -747,7 +832,8 @@ export default function CustomDesignPage() {
                                                                 >
                                                                     <div
                                                                         className={cn(
-                                                                            "w-10 h-10 rounded-full border shadow-sm transition-all relative",
+                                                                            "w-10 h-10 rounded-full border shadow-sm transition-all relative overflow-hidden",
+                                                                            c.bgClass,
                                                                             envColor.id === c.id ? "ring-2 ring-primary ring-offset-2 scale-110" : "group-hover:scale-105"
                                                                         )}
                                                                         style={{ backgroundColor: c.hex }}
@@ -759,8 +845,8 @@ export default function CustomDesignPage() {
                                                                         )}
                                                                     </div>
                                                                     <div className="text-center">
-                                                                        <p className="text-[10px] font-medium truncate w-full">{c.name}</p>
-                                                                        <p className="text-[10px] text-muted-foreground">{c.price > 0 ? `+$${c.price.toFixed(2)}` : 'Free'}</p>
+                                                                        <p className="text-[10px] font-medium truncate w-full px-1">{c.name}</p>
+                                                                        {c.price > 0 && <p className="text-[10px] text-muted-foreground">+${c.price.toFixed(2)}</p>}
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -783,7 +869,9 @@ export default function CustomDesignPage() {
                                                                     <Label htmlFor={`emb-${opt.id}`} className="text-sm font-normal cursor-pointer flex-1">
                                                                         {opt.name}
                                                                     </Label>
-                                                                    <span className="text-xs text-muted-foreground">+${opt.price.toFixed(2)}</span>
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        +${((opt.type === 'per_unit' ? opt.price * quantity : opt.price) + (opt.baseFee || 0)).toFixed(2)}
+                                                                    </span>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -803,7 +891,9 @@ export default function CustomDesignPage() {
                                                                     <Label htmlFor={`liner-${opt.id}`} className="text-sm font-normal cursor-pointer flex-1">
                                                                         {opt.name}
                                                                     </Label>
-                                                                    <span className="text-xs text-muted-foreground">+${opt.price.toFixed(2)}</span>
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        +${((opt.type === 'per_unit' ? opt.price * quantity : opt.price) + (opt.baseFee || 0)).toFixed(2)}
+                                                                    </span>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -823,7 +913,9 @@ export default function CustomDesignPage() {
                                                                     <Label htmlFor={`seal-${opt.id}`} className="text-sm font-normal cursor-pointer flex-1">
                                                                         {opt.name}
                                                                     </Label>
-                                                                    <span className="text-xs text-muted-foreground">+${opt.price.toFixed(2)}</span>
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        +${((opt.type === 'per_unit' ? opt.price * quantity : opt.price) + (opt.baseFee || 0)).toFixed(2)}
+                                                                    </span>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -843,7 +935,9 @@ export default function CustomDesignPage() {
                                                                     <Label htmlFor={`addr-${opt.id}`} className="text-sm font-normal cursor-pointer flex-1">
                                                                         {opt.name}
                                                                     </Label>
-                                                                    <span className="text-xs text-muted-foreground">+${opt.price.toFixed(2)}</span>
+                                                                    <span className="text-xs text-muted-foreground">
+                                                                        +${((opt.type === 'per_unit' ? opt.price * quantity : opt.price) + (opt.baseFee || 0)).toFixed(2)}
+                                                                    </span>
                                                                 </div>
                                                             ))}
                                                         </div>
@@ -880,7 +974,12 @@ export default function CustomDesignPage() {
                                                     {/* Material */}
                                                     <div className="space-y-3">
                                                         <Label className="text-base">Choose Pocket Material</Label>
-                                                        <Select value={pocketMaterial.id} onValueChange={(val) => setPocketMaterial(POCKET_MATERIALS.find(m => m.id === val) || POCKET_MATERIALS[0])}>
+                                                        <Select value={pocketMaterial.id} onValueChange={(val) => {
+                                                            const mat = POCKET_MATERIALS.find(m => m.id === val) || POCKET_MATERIALS[0];
+                                                            setPocketMaterial(mat);
+                                                            const availableColors = COLORS_BY_MATERIAL[mat.id] || COLORS_BY_MATERIAL.matte;
+                                                            setPocketColor(availableColors[0]);
+                                                        }}>
                                                             <SelectTrigger className="w-full h-12">
                                                                 <SelectValue />
                                                             </SelectTrigger>
@@ -898,7 +997,7 @@ export default function CustomDesignPage() {
                                                     <div className="space-y-3">
                                                         <Label className="text-base">Choose Pocket Color</Label>
                                                         <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
-                                                            {POCKET_COLORS.map(c => (
+                                                            {(COLORS_BY_MATERIAL[pocketMaterial.id] || COLORS_BY_MATERIAL.matte).map(c => (
                                                                 <div
                                                                     key={c.id}
                                                                     className="flex flex-col items-center gap-2 cursor-pointer group"
@@ -906,7 +1005,8 @@ export default function CustomDesignPage() {
                                                                 >
                                                                     <div
                                                                         className={cn(
-                                                                            "w-10 h-10 rounded-full border shadow-sm transition-all relative",
+                                                                            "w-10 h-10 rounded-full border shadow-sm transition-all relative overflow-hidden",
+                                                                            c.bgClass,
                                                                             pocketColor.id === c.id ? "ring-2 ring-primary ring-offset-2 scale-110" : "group-hover:scale-105"
                                                                         )}
                                                                         style={{ backgroundColor: c.hex }}
@@ -918,8 +1018,8 @@ export default function CustomDesignPage() {
                                                                         )}
                                                                     </div>
                                                                     <div className="text-center">
-                                                                        <p className="text-[10px] font-medium truncate w-full">{c.name}</p>
-                                                                        <p className="text-[10px] text-muted-foreground">{c.price > 0 ? `+$${c.price.toFixed(2)}` : 'Free'}</p>
+                                                                        <p className="text-[10px] font-medium truncate w-full px-1">{c.name}</p>
+                                                                        {c.price > 0 && <p className="text-[10px] text-muted-foreground">+${c.price.toFixed(2)}</p>}
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -986,7 +1086,10 @@ export default function CustomDesignPage() {
                                                             const style = FOLIO_STYLES.find(s => s.id === val) || FOLIO_STYLES[0];
                                                             setFolioStyle(style);
                                                             // Reset material when style changes as materials are style-specific
-                                                            setFolioMaterial(FOLIO_MATERIALS[style.id][0]);
+                                                            const newMaterial = FOLIO_MATERIALS[style.id][0];
+                                                            setFolioMaterial(newMaterial);
+                                                            const availableColors = COLORS_BY_MATERIAL[newMaterial.id] || COLORS_BY_MATERIAL.matte;
+                                                            setFolioColor(availableColors[0]);
                                                         }}>
                                                             <SelectTrigger className="w-full h-12">
                                                                 <SelectValue />
@@ -1004,7 +1107,12 @@ export default function CustomDesignPage() {
                                                     {/* Material */}
                                                     <div className="space-y-3">
                                                         <Label className="text-base">Choose Folio Material</Label>
-                                                        <Select value={folioMaterial.id} onValueChange={(val) => setFolioMaterial(FOLIO_MATERIALS[folioStyle.id].find(m => m.id === val) || FOLIO_MATERIALS[folioStyle.id][0])}>
+                                                        <Select value={folioMaterial.id} onValueChange={(val) => {
+                                                            const mat = FOLIO_MATERIALS[folioStyle.id].find(m => m.id === val) || FOLIO_MATERIALS[folioStyle.id][0];
+                                                            setFolioMaterial(mat);
+                                                            const availableColors = COLORS_BY_MATERIAL[mat.id] || COLORS_BY_MATERIAL.matte;
+                                                            setFolioColor(availableColors[0]);
+                                                        }}>
                                                             <SelectTrigger className="w-full h-12">
                                                                 <SelectValue />
                                                             </SelectTrigger>
@@ -1022,7 +1130,7 @@ export default function CustomDesignPage() {
                                                     <div className="space-y-3">
                                                         <Label className="text-base">Choose Folio Color</Label>
                                                         <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
-                                                            {POCKET_COLORS.map(c => (
+                                                            {(COLORS_BY_MATERIAL[folioMaterial.id] || COLORS_BY_MATERIAL.matte).map(c => (
                                                                 <div
                                                                     key={c.id}
                                                                     className="flex flex-col items-center gap-2 cursor-pointer group"
@@ -1030,7 +1138,8 @@ export default function CustomDesignPage() {
                                                                 >
                                                                     <div
                                                                         className={cn(
-                                                                            "w-10 h-10 rounded-full border shadow-sm transition-all relative",
+                                                                            "w-10 h-10 rounded-full border shadow-sm transition-all relative overflow-hidden",
+                                                                            c.bgClass,
                                                                             folioColor.id === c.id ? "ring-2 ring-primary ring-offset-2 scale-110" : "group-hover:scale-105"
                                                                         )}
                                                                         style={{ backgroundColor: c.hex }}
@@ -1042,8 +1151,8 @@ export default function CustomDesignPage() {
                                                                         )}
                                                                     </div>
                                                                     <div className="text-center">
-                                                                        <p className="text-[10px] font-medium truncate w-full">{c.name}</p>
-                                                                        <p className="text-[10px] text-muted-foreground">{c.price > 0 ? `+$${c.price.toFixed(2)}` : 'Free'}</p>
+                                                                        <p className="text-[10px] font-medium truncate w-full px-1">{c.name}</p>
+                                                                        {c.price > 0 && <p className="text-[10px] text-muted-foreground">+${c.price.toFixed(2)}</p>}
                                                                     </div>
                                                                 </div>
                                                             ))}
@@ -1054,9 +1163,12 @@ export default function CustomDesignPage() {
 
                                                     {/* Embellishments */}
                                                     <div className="space-y-3">
-                                                        <Label className="text-base uppercase tracking-wide text-muted-foreground text-xs font-bold">Folio Embellishments</Label>
+                                                        <Label className="text-base uppercase tracking-wide text-muted-foreground text-xs font-bold">
+                                                            {folioStyle.id === 'foldable' ? 'Gatefold Cover Embellishments' :
+                                                                folioStyle.id === 'trifold' ? 'Trifold Embellishments' : 'Folio Embellishments'}
+                                                        </Label>
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                                            {FOLIO_EMBELLISHMENTS.map(opt => (
+                                                            {(FOLIO_EMBELLISHMENTS_BY_STYLE[folioStyle.id] || FOLIO_EMBELLISHMENTS).map(opt => (
                                                                 <div key={opt.id} className="flex items-center space-x-2">
                                                                     <Checkbox
                                                                         id={`folio-emb-${opt.id}`}
@@ -1081,27 +1193,30 @@ export default function CustomDesignPage() {
                                         <div className="space-y-4">
                                             <Label className="text-base">Professional Services</Label>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                {SERVICE_ADD_ONS.map((service) => (
-                                                    <div key={service.id}
-                                                        className={cn(
-                                                            "flex items-center space-x-3 p-4 border rounded-lg transition-colors cursor-pointer",
-                                                            selectedServices.includes(service.id) ? "bg-primary/5 border-primary" : "hover:bg-muted/50"
-                                                        )}
-                                                        onClick={() => toggleSelection(service.id, selectedServices, setSelectedServices)}
-                                                    >
-                                                        <Checkbox
-                                                            id={`svc-${service.id}`}
-                                                            checked={selectedServices.includes(service.id)}
-                                                            onCheckedChange={() => toggleSelection(service.id, selectedServices, setSelectedServices)}
-                                                        />
-                                                        <div className="flex-1">
-                                                            <Label htmlFor={`svc-${service.id}`} className="font-medium cursor-pointer">{service.name}</Label>
+                                                {SERVICE_ADD_ONS.map((service) => {
+                                                    const displayPrice = (service.id === 'rush' && includeFolios) ? service.price * 2 : service.price;
+                                                    return (
+                                                        <div key={service.id}
+                                                            className={cn(
+                                                                "flex items-center space-x-3 p-4 border rounded-lg transition-colors cursor-pointer",
+                                                                selectedServices.includes(service.id) ? "bg-primary/5 border-primary" : "hover:bg-muted/50"
+                                                            )}
+                                                            onClick={() => toggleSelection(service.id, selectedServices, setSelectedServices)}
+                                                        >
+                                                            <Checkbox
+                                                                id={`svc-${service.id}`}
+                                                                checked={selectedServices.includes(service.id)}
+                                                                onCheckedChange={() => toggleSelection(service.id, selectedServices, setSelectedServices)}
+                                                            />
+                                                            <div className="flex-1">
+                                                                <Label htmlFor={`svc-${service.id}`} className="font-medium cursor-pointer">{service.name}</Label>
+                                                            </div>
+                                                            <span className="text-sm font-medium">
+                                                                +${displayPrice.toFixed(2)} {service.type === 'per_unit' ? '/ea' : 'flat'}
+                                                            </span>
                                                         </div>
-                                                        <span className="text-sm font-medium">
-                                                            +${service.price.toFixed(2)} {service.type === 'per_unit' ? '/ea' : 'flat'}
-                                                        </span>
-                                                    </div>
-                                                ))}
+                                                    );
+                                                })}
                                             </div>
                                         </div>
                                     </div>
@@ -1182,39 +1297,40 @@ export default function CustomDesignPage() {
                                     <SummaryRow
                                         label="Shape"
                                         value={shape.name}
-                                        price={shape.type === 'flat' ? shape.price : shape.price * quantity}
+                                        price={getRowPrice(shape)}
                                     />
 
-                                    {invitationType === 'acrylic' && <SummaryRow label="Acrylic" value={acrylicOption.name} price={acrylicOption.price * quantity} />}
-                                    {invitationType === 'vellum' && <SummaryRow label="Vellum" value={vellumOption.name} price={vellumOption.price * quantity} />}
-                                    {invitationType === 'paper' && <SummaryRow label="Paper" value={paperOption.name} price={paperOption.price * quantity} />}
+                                    {invitationType === 'acrylic' && <SummaryRow label="Acrylic" value={acrylicOption.name} price={getRowPrice(acrylicOption)} />}
+                                    {invitationType === 'vellum' && <SummaryRow label="Vellum" value={vellumOption.name} price={getRowPrice(vellumOption)} />}
+                                    {invitationType === 'paper' && <SummaryRow label="Paper" value={paperOption.name} price={getRowPrice(paperOption)} />}
 
-                                    <SummaryRow label="Print/Foil" value={printColor.name} price={printColor.price * quantity} />
+                                    <SummaryRow label="Print/Foil" value={printColor?.name || 'None'} price={printColor ? getRowPrice(printColor) : 0} />
+                                    {additionalFoilColors > 0 && <SummaryRow label="Additional Foils" value={`${additionalFoilColors} Color(s)`} price={additionalFoilColors * ADDITIONAL_FOIL_COLOR_PRICE} />}
 
                                     {includeEnvelopes && (
                                         <>
                                             <Separator className="my-2" />
                                             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Envelopes</span>
-                                            <SummaryRow label="Material" value={envMaterial.name} price={envMaterial.price * quantity} />
-                                            <SummaryRow label="Color" value={envColor.name} price={envColor.price * quantity} />
+                                            <SummaryRow label="Material" value={envMaterial.name} price={getRowPrice(envMaterial)} />
+                                            <SummaryRow label="Color" value={envColor.name} price={getRowPrice(envColor)} />
 
                                             {selectedEmbellishments.map(id => {
                                                 const opt = ENVELOPE_EMBELLISHMENTS.find(o => o.id === id)!;
-                                                return <SummaryRow key={id} label={opt.name} value="" price={opt.price * quantity} />
+                                                return <SummaryRow key={id} label={opt.name} value="" price={getRowPrice(opt)} />
                                             })}
 
                                             {selectedLiner && (
-                                                <SummaryRow label="Liner" value={ENVELOPE_LINERS.find(o => o.id === selectedLiner)!.name} price={ENVELOPE_LINERS.find(o => o.id === selectedLiner)!.price * quantity} />
+                                                <SummaryRow label="Liner" value={ENVELOPE_LINERS.find(o => o.id === selectedLiner)!.name} price={getRowPrice(ENVELOPE_LINERS.find(o => o.id === selectedLiner)!)} />
                                             )}
 
                                             {selectedSeals.map(id => {
                                                 const opt = ENVELOPE_SEALS.find(o => o.id === id)!;
-                                                return <SummaryRow key={id} label={opt.name} value="" price={opt.price * quantity} />
+                                                return <SummaryRow key={id} label={opt.name} value="" price={getRowPrice(opt)} />
                                             })}
 
                                             {selectedAddressing.map(id => {
                                                 const opt = ENVELOPE_ADDRESSING.find(o => o.id === id)!;
-                                                return <SummaryRow key={id} label={opt.name} value="" price={opt.price * quantity} />
+                                                return <SummaryRow key={id} label={opt.name} value="" price={getRowPrice(opt)} />
                                             })}
                                         </>
                                     )}
@@ -1223,12 +1339,12 @@ export default function CustomDesignPage() {
                                         <>
                                             <Separator className="my-2" />
                                             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pockets</span>
-                                            <SummaryRow label="Material" value={pocketMaterial.name} price={pocketMaterial.price * quantity} />
-                                            <SummaryRow label="Color" value={pocketColor.name} price={pocketColor.price * quantity} />
+                                            <SummaryRow label="Material" value={pocketMaterial.name} price={getRowPrice(pocketMaterial)} />
+                                            <SummaryRow label="Color" value={pocketColor.name} price={getRowPrice(pocketColor)} />
 
                                             {selectedPocketEmbellishments.map(id => {
                                                 const opt = POCKET_EMBELLISHMENTS.find(o => o.id === id)!;
-                                                return <SummaryRow key={id} label={opt.name} value="" price={opt.price * quantity} />
+                                                return <SummaryRow key={id} label={opt.name} value="" price={getRowPrice(opt)} />
                                             })}
                                         </>
                                     )}
@@ -1238,12 +1354,12 @@ export default function CustomDesignPage() {
                                             <Separator className="my-2" />
                                             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Folios</span>
                                             <SummaryRow label="Style" value={folioStyle.name} price={0} />
-                                            <SummaryRow label="Material" value={folioMaterial.name} price={folioMaterial.price * quantity} />
-                                            <SummaryRow label="Color" value={folioColor.name} price={folioColor.price * quantity} />
+                                            <SummaryRow label="Material" value={folioMaterial.name} price={getRowPrice(folioMaterial)} />
+                                            <SummaryRow label="Color" value={folioColor.name} price={getRowPrice(folioColor)} />
 
                                             {selectedFolioEmbellishments.map(id => {
                                                 const opt = FOLIO_EMBELLISHMENTS.find(o => o.id === id)!;
-                                                return <SummaryRow key={id} label={opt.name} value="" price={opt.price * quantity} />
+                                                return <SummaryRow key={id} label={opt.name} value="" price={getRowPrice(opt)} />
                                             })}
                                         </>
                                     )}
@@ -1252,12 +1368,12 @@ export default function CustomDesignPage() {
                                         <>
                                             <Separator className="my-2" />
                                             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                                Inserts ({insertPrintType === 'foil' ? 'Foil-Pressed' : 'Digital'})
+                                                Inserts
                                             </span>
                                             {selectedInserts.map(id => {
-                                                const currentInsertList = insertPrintType === 'foil' ? SUITE_INSERTS_FOIL : SUITE_INSERTS_DIGITAL;
-                                                const opt = currentInsertList.find(o => o.id === id)!;
-                                                return <SummaryRow key={id} label={opt.name} value="" price={opt.price} />
+                                                const allInserts = [...SUITE_INSERTS_DIGITAL, ...SUITE_INSERTS_FOIL];
+                                                const opt = allInserts.find(o => o.id === id)!;
+                                                return <SummaryRow key={id} label={opt.name} value="" price={getRowPrice(opt)} />
                                             })}
                                         </>
                                     )}
@@ -1268,8 +1384,7 @@ export default function CustomDesignPage() {
                                             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Services</span>
                                             {selectedServices.map(id => {
                                                 const opt = SERVICE_ADD_ONS.find(o => o.id === id)!;
-                                                const price = opt.type === 'per_unit' ? opt.price * quantity : opt.price;
-                                                return <SummaryRow key={id} label={opt.name} value={opt.type === 'flat' ? 'Flat Fee' : ''} price={price} />
+                                                return <SummaryRow key={id} label={opt.name} value={opt.type === 'flat' ? 'Flat Fee' : ''} price={getRowPrice(opt)} />
                                             })}
                                         </>
                                     )}

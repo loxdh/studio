@@ -101,6 +101,9 @@ const Footer = () => {
                 <Mail className="h-5 w-5 shrink-0" />
                 <span>hello@unitedloveluxe.com</span>
               </li>
+              <li className="flex items-center gap-3 text-muted-foreground pt-2">
+                <p className="text-sm">We ship worldwide via UPS & DHL</p>
+              </li>
             </ul>
           </div>
 

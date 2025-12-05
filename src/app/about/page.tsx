@@ -141,7 +141,7 @@ export default function AboutPage() {
                                 <Link href="/products">Shop Collection</Link>
                             </Button>
                             <Button size="lg" variant="outline" asChild className="rounded-full px-8 bg-background/50 backdrop-blur-sm">
-                                <Link href="/custom-design">Inquire Custom</Link>
+                                <Link href="/custom-order">Inquire Custom</Link>
                             </Button>
                         </div>
                     </FadeIn>

@@ -20,7 +20,7 @@ const testimonials = [
     {
         id: 2,
         name: "Emily R.",
-        text: "Working with United Love Luxe was a dream. They understood my vision perfectly and created a custom design that felt so 'us'. Highly recommend!",
+        text: "Working with United Love Luxe was a dream. They understood my vision perfectly and created a custom order that felt so 'us'. Highly recommend!",
         location: "Los Angeles, CA"
     },
     {

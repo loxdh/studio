@@ -38,11 +38,17 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
         const doc = querySnapshot.docs[0];
         const data = doc.data();
 
+        // Safety checks for required fields
+        if (!data.title || !data.content) {
+            console.error('Blog post missing title or content:', doc.id);
+            return null;
+        }
+
         return {
             id: doc.id,
             ...data,
             // Serializable dates for Next.js server components
-            createdAt: data.createdAt ? { seconds: data.createdAt.seconds, nanoseconds: data.createdAt.nanoseconds } : null,
+            createdAt: data.createdAt?.seconds ? { seconds: data.createdAt.seconds, nanoseconds: data.createdAt.nanoseconds || 0 } : null,
         } as BlogPost;
     } catch (error) {
         console.error('Error fetching blog post:', error);

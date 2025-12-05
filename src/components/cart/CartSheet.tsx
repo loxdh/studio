@@ -82,21 +82,27 @@ export default function CartSheet({ onClose }: { onClose?: () => void }) {
 
                       <div className="flex items-center justify-between mt-4">
                         <div className="w-[140px]">
-                          <Select
-                            value={item.quantity.toString()}
-                            onValueChange={(val) => updateQuantity(item.product.id, parseInt(val), item.customizations)}
-                          >
-                            <SelectTrigger className="h-9">
-                              <SelectValue placeholder="Qty" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {QUANTITY_OPTIONS.map((num) => (
-                                <SelectItem key={num} value={num.toString()}>
-                                  Set of {num}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          {item.product.name.toLowerCase().includes('deposit') ? (
+                            <div className="h-9 flex items-center px-3 border rounded-md bg-muted/50 text-sm text-muted-foreground">
+                              Qty: 1
+                            </div>
+                          ) : (
+                            <Select
+                              value={item.quantity.toString()}
+                              onValueChange={(val) => updateQuantity(item.product.id, parseInt(val), item.customizations)}
+                            >
+                              <SelectTrigger className="h-9">
+                                <SelectValue placeholder="Qty" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {QUANTITY_OPTIONS.map((num) => (
+                                  <SelectItem key={num} value={num.toString()}>
+                                    Set of {num}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
                         </div>
                         <p className="font-semibold text-primary">
                           ${(item.product.price * item.quantity).toFixed(2)}
